@@ -1,0 +1,32 @@
+// ==============================================================================
+// FLOCI-AURA: CORS, Logging & Request Buffering Middleware
+// ==============================================================================
+
+import { incrementRequestsCount } from "./state";
+
+export fn registerCorsAndBufferMiddleware(mux: Any): Unit => {
+  mux.use(fn(req: Any, res: Any, next: Any) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-amz-date, x-amz-target, x-amz-security-token, x-amzn-target, x-amz-user-agent");
+    res.setHeader("X-Powered-By", "Floci-Aura (Aura Lang Native Engine)");
+    res.setHeader("Server", "floci-aura/0.2.0");
+
+    if (req.method == "OPTIONS") {
+      res.writeHead(http.StatusNoContent);
+      res.end();
+      return();
+    }
+
+    let mut buffer = "";
+    req.on("data", fn(chunk: Any) => {
+      buffer = buffer + chunk;
+    });
+
+    req.on("end", fn() => {
+      req.rawBody = buffer;
+      incrementRequestsCount();
+      next();
+    });
+  });
+};

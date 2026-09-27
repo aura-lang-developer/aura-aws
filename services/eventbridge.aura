@@ -1,0 +1,37 @@
+// ==============================================================================
+// FLOCI-AURA: AWS EventBridge Service Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, generateUuid } from "./utils";
+
+export fn handleEventBridge(req: Any, res: Any, target: String, payload: Any): Unit => {
+  let s = getState();
+  auditRequest(req, "EventBridge", 200);
+
+  if (target.endsWith("CreateEventBus")) {
+    let bName = payload.Name;
+    let newBus = {
+      name: bName,
+      arn: `arn:aws:events:us-east-1:000000000000:event-bus/${bName}`,
+      rules: []
+    };
+    s.eventBuses.push(newBus);
+    logEvent("EVENTBRIDGE", "info", `Created event bus '${bName}'`);
+    http.json(res, http.StatusOK, {EventBusArn: newBus.arn});
+    return();
+  }
+
+  if (target.endsWith("ListEventBuses")) {
+    http.json(res, http.StatusOK, {EventBuses: s.eventBuses});
+    return();
+  }
+
+  if (target.endsWith("PutEvents")) {
+    logEvent("EVENTBRIDGE", "info", "PutEvents received event batch");
+    http.json(res, http.StatusOK, {FailedEntryCount: 0, Entries: [ {EventId: generateUuid()}]});
+    return();
+  }
+
+  http.json(res, http.StatusOK, {});
+};

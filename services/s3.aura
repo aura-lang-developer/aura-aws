@@ -1,0 +1,220 @@
+// ==============================================================================
+// FLOCI-AURA: Amazon S3 Storage Service REST API
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, generateUuid, defaultStr } from "./utils";
+import { renderS3ListBuckets, renderS3ListObjects, xmlWrap } from "./xml";
+
+export fn registerS3Routes(mux: Any): Unit => {
+  // List all Buckets (S3 root GET or browser landing redirect)
+  mux.get("/", fn(req: Any, res: Any) => {
+    let accept = if (req.headers != () && req.headers["accept"] != ()) {
+      `${req.headers["accept"]}`
+    }else {
+      ""
+    };
+
+    // If user visits http://localhost:4566/ directly in a browser, redirect to Web Console!
+    if (accept.includes("text/html")) {
+      http.redirect(res, "/_floci/ui", 302);
+      return();
+    }
+
+    auditRequest(req, "S3", 200);
+    res.setHeader("Content-Type", "application/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderS3ListBuckets());
+  });
+
+  // S3 Create Bucket: PUT /:bucket
+  mux.put("/:bucket", fn(req: Any, res: Any) => {
+    let s = getState();
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    auditRequest(req, "S3", 200);
+
+    let exists = s.s3Buckets.filter(fn(b: Any): Bool => b.name == bName);
+    if (exists.length == 0) {
+      s.s3Buckets.push({
+        name: bName,
+        region: "us-east-1",
+        createdAt: "2026-09-18T12:00:00.000Z"
+      });
+      logEvent("S3", "info", `Created bucket s3://${bName}`);
+    }
+
+    res.setHeader("Location", `/${bName}`);
+    res.writeHead(http.StatusOK);
+    res.end();
+  });
+
+  // S3 Delete Bucket: DELETE /:bucket
+  mux.delete("/:bucket", fn(req: Any, res: Any) => {
+    let s = getState();
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    auditRequest(req, "S3", 204);
+
+    s.s3Buckets = s.s3Buckets.filter(fn(b: Any): Bool => b.name != bName);
+    s.s3Objects = s.s3Objects.filter(fn(o: Any): Bool => o.bucket != bName);
+    logEvent("S3", "info", `Deleted bucket s3://${bName}`);
+
+    res.writeHead(http.StatusNoContent);
+    res.end();
+  });
+
+  // S3 List Objects inside Bucket: GET /:bucket
+  mux.get("/:bucket", fn(req: Any, res: Any) => {
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    let prefix = http.query(req, "prefix");
+    auditRequest(req, "S3", 200);
+
+    res.setHeader("Content-Type", "application/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderS3ListObjects(bName, prefix));
+  });
+
+  // S3 Multipart Upload: POST /:bucket/:key (?uploads or ?uploadId=...)
+  mux.post("/:bucket/:key", fn(req: Any, res: Any) => {
+    let s = getState();
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    let key = http.pathValue(req, "key");
+    let uploads = http.query(req, "uploads");
+    let uploadId = http.query(req, "uploadId");
+    auditRequest(req, "S3", 200);
+
+    if (uploads != "" || req.url.includes("?uploads")) {
+      let newUploadId = generateUuid();
+      logEvent("S3", "info", `Initiated multipart upload for s3://${bName}/${key}`);
+      let result = xmlWrap("Bucket", bName) + xmlWrap("Key", key) + xmlWrap("UploadId", newUploadId);
+      let body = `<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">\n${result}\n</InitiateMultipartUploadResult>`;
+      res.setHeader("Content-Type", "application/xml");
+      res.writeHead(http.StatusOK);
+      res.end(body);
+      return();
+    }
+
+    if (uploadId != "") {
+      let etag = `"${generateUuid()}"`;
+      s.s3Objects = s.s3Objects.filter(fn(o: Any): Bool => !(o.bucket == bName && o.key == key));
+      s.s3Objects.push({
+        bucket: bName,
+        key: key,
+        content: defaultStr(req.rawBody, ""),
+        size: req.rawBody.length,
+        contentType: "application/octet-stream",
+        etag: etag,
+        lastModified: "2026-09-18T12:00:00.000Z"
+      });
+      logEvent("S3", "info", `Completed multipart upload for s3://${bName}/${key}`);
+      let result = xmlWrap("Location", `/${bName}/${key}`) + xmlWrap("Bucket", bName) + xmlWrap("Key", key) + xmlWrap("ETag", etag);
+      let body = `<?xml version="1.0" encoding="UTF-8"?>\n<CompleteMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">\n${result}\n</CompleteMultipartUploadResult>`;
+      res.setHeader("Content-Type", "application/xml");
+      res.writeHead(http.StatusOK);
+      res.end(body);
+      return();
+    }
+
+    http.json(res, http.StatusOK, {});
+  });
+
+  // S3 Put Object: PUT /:bucket/:key
+  mux.put("/:bucket/:key", fn(req: Any, res: Any) => {
+    let s = getState();
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    let key = http.pathValue(req, "key");
+    auditRequest(req, "S3", 200);
+
+    let cType = if (req.headers != () && req.headers["content-type"] != ()) {
+      `${req.headers["content-type"]}`
+    }else {
+      "application/octet-stream"
+    };
+
+    let content = defaultStr(req.rawBody, "");
+    let etag = `"${generateUuid()}"`;
+
+    // Upsert object
+    s.s3Objects = s.s3Objects.filter(fn(o: Any): Bool => !(o.bucket == bName && o.key == key));
+    s.s3Objects.push({
+      bucket: bName,
+      key: key,
+      content: content,
+      size: content.length,
+      contentType: cType,
+      etag: etag,
+      lastModified: "2026-09-18T12:00:00.000Z"
+    });
+
+    logEvent("S3", "info", `Uploaded object s3://${bName}/${key} (${content.length} bytes)`);
+
+    res.setHeader("ETag", etag);
+    res.writeHead(http.StatusOK);
+    res.end();
+  });
+
+  // S3 Get Object: GET /:bucket/:key
+  mux.get("/:bucket/:key", fn(req: Any, res: Any) => {
+    let s = getState();
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    let key = http.pathValue(req, "key");
+    auditRequest(req, "S3", 200);
+
+    let matched = s.s3Objects.filter(fn(o: Any): Bool => o.bucket == bName && o.key == key);
+    if (matched.length > 0) {
+      let obj = matched[0];
+      res.setHeader("Content-Type", defaultStr(obj.contentType, "text/plain"));
+      res.setHeader("Content-Length", obj.size);
+      res.setHeader("ETag", obj.etag);
+      res.setHeader("Last-Modified", obj.lastModified);
+      res.writeHead(http.StatusOK);
+      res.end(obj.content);
+    }else {
+      res.setHeader("Content-Type", "application/xml");
+      res.writeHead(http.StatusNotFound);
+      res.end("<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message></Error>");
+    }
+  });
+
+  // S3 Delete Object: DELETE /:bucket/:key
+  mux.delete("/:bucket/:key", fn(req: Any, res: Any) => {
+    let s = getState();
+    let bName = http.pathValue(req, "bucket");
+    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+      return();
+    }
+    let key = http.pathValue(req, "key");
+    let uploadId = http.query(req, "uploadId");
+    auditRequest(req, "S3", 204);
+
+    if (uploadId != "") {
+      logEvent("S3", "info", `Aborted multipart upload for s3://${bName}/${key}`);
+      res.writeHead(http.StatusNoContent);
+      res.end();
+      return();
+    }
+
+    s.s3Objects = s.s3Objects.filter(fn(o: Any): Bool => !(o.bucket == bName && o.key == key));
+    logEvent("S3", "info", `Deleted object s3://${bName}/${key}`);
+
+    res.writeHead(http.StatusNoContent);
+    res.end();
+  });
+};

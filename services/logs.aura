@@ -1,0 +1,74 @@
+// ==============================================================================
+// FLOCI-AURA: AWS CloudWatch Logs Service Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, defaultList } from "./utils";
+
+export fn handleLogs(req: Any, res: Any, target: String, payload: Any): Unit => {
+  let s = getState();
+  auditRequest(req, "CloudWatchLogs", 200);
+
+  if (target.endsWith("CreateLogGroup")) {
+    let gName = payload.logGroupName;
+    let item = {
+      name: gName,
+      arn: `arn:aws:logs:us-east-1:000000000000:log-group:${gName}`,
+      streams: [],
+      createdAt: "2026-09-18T12:00:00.000Z"
+    };
+    s.cwLogGroups.push(item);
+    http.json(res, http.StatusOK, {});
+    return();
+  }
+
+  if (target.endsWith("DescribeLogGroups")) {
+    http.json(res, http.StatusOK, {logGroups: s.cwLogGroups});
+    return();
+  }
+
+  if (target.endsWith("PutLogEvents")) {
+    let gName = payload.logGroupName;
+    let events = defaultList(payload.logEvents);
+    for ev in events {
+      s.liveLogs.push({
+        timestamp: "12:00:04",
+        level: "info",
+        service: gName,
+        message: ev.message
+      });
+    }
+    http.json(res, http.StatusOK, {nextSequenceToken: "tok-491284"});
+    return();
+  }
+
+  if (target.endsWith("CreateLogStream")) {
+    let gName = payload.logGroupName;
+    let sName = payload.logStreamName;
+    let matched = s.cwLogGroups.filter(fn(g: Any): Bool => g.name == gName);
+    if (matched.length > 0) {
+      matched[0].streams.push(sName);
+    }
+    logEvent("CLOUDWATCH", "info", `Created log stream '${sName}' in '${gName}'`);
+    http.json(res, http.StatusOK, {});
+    return();
+  }
+
+  if (target.endsWith("DescribeLogStreams")) {
+    let gName = payload.logGroupName;
+    let matched = s.cwLogGroups.filter(fn(g: Any): Bool => g.name == gName);
+    let streams = if (matched.length > 0) {
+      matched[0].streams.map(fn(st: Any): Any => {
+        logStreamName: st,
+        arn: `arn:aws:logs:us-east-1:000000000000:log-group:${gName}:log-stream:${st}`,
+        creationTime: 1726660800000
+      })
+    }else {
+      []
+    };
+    http.json(res, http.StatusOK, {logStreams: streams});
+    return();
+  }
+
+  http.json(res, http.StatusOK, {});
+};

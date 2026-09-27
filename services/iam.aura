@@ -1,0 +1,65 @@
+// ==============================================================================
+// FLOCI-AURA: AWS IAM (Identity and Access Management) Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, generateUuid, defaultStr } from "./utils";
+import { renderIamCreateRole, renderIamListRoles } from "./xml";
+
+export fn handleIAM(req: Any, res: Any, action: String): Unit => {
+  let s = getState();
+
+  if (action == "CreateUser") {
+    auditRequest(req, "IAM", 200);
+    let uName = defaultStr(http.query(req, "UserName"), "test-user");
+    let uId = generateUuid();
+    let uArn = `arn:aws:iam::000000000000:user/${uName}`;
+    let newUser = {name: uName, arn: uArn, userId: uId, createdAt: "2026-09-18T12:00:00.000Z"};
+    s.iamUsers.push(newUser);
+    logEvent("IAM", "info", `Created IAM user '${uName}'`);
+    http.json(res, http.StatusOK, {User: newUser});
+    return();
+  }
+
+  if (action == "ListUsers") {
+    auditRequest(req, "IAM", 200);
+    http.json(res, http.StatusOK, {Users: s.iamUsers});
+    return();
+  }
+
+  if (action == "CreateRole") {
+    auditRequest(req, "IAM", 200);
+    let rName = defaultStr(http.query(req, "RoleName"), "test-role");
+    let rId = generateUuid();
+    let rArn = `arn:aws:iam::000000000000:role/${rName}`;
+    let newRole = {
+      roleName: rName,
+      arn: rArn,
+      roleId: rId,
+      assumeRolePolicyDocument: "%7B%22Version%22%3A%222012-10-17%22%7D",
+      createdAt: "2026-09-18T12:00:00.000Z"
+    };
+    s.iamRoles.push(newRole);
+    logEvent("IAM", "info", `Created IAM role '${rName}'`);
+    if (req.headers != () && req.headers["accept"] != () && `${req.headers["accept"]}`.includes("application/json")) {
+      http.json(res, http.StatusOK, {Role: newRole});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderIamCreateRole(newRole));
+    }
+    return();
+  }
+
+  if (action == "ListRoles") {
+    auditRequest(req, "IAM", 200);
+    if (req.headers != () && req.headers["accept"] != () && `${req.headers["accept"]}`.includes("application/json")) {
+      http.json(res, http.StatusOK, {Roles: s.iamRoles});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderIamListRoles());
+    }
+    return();
+  }
+};

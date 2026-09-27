@@ -1,0 +1,42 @@
+// ==============================================================================
+// FLOCI-AURA: AWS STS (Security Token Service) Handler
+// ==============================================================================
+
+import { auditRequest, getFormValue } from "./utils";
+import { renderStsCallerIdentity, renderStsAssumeRole } from "./xml";
+
+export fn handleSTS(req: Any, res: Any, action: String): Unit => {
+  if (action == "GetCallerIdentity") {
+    auditRequest(req, "STS", 200);
+    res.setHeader("Content-Type", "text/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderStsCallerIdentity());
+    return();
+  }
+
+  if (action == "AssumeRole") {
+    auditRequest(req, "STS", 200);
+    let formArn = getFormValue(req.rawBody, "RoleArn");
+    let roleArn = if (http.query(req, "RoleArn") != "") {
+      http.query(req, "RoleArn")
+    }else if (formArn != "") {
+      formArn
+    }else {
+      "arn:aws:iam::000000000000:role/mock-role"
+    };
+
+    let formSession = getFormValue(req.rawBody, "RoleSessionName");
+    let sessionName = if (http.query(req, "RoleSessionName") != "") {
+      http.query(req, "RoleSessionName")
+    }else if (formSession != "") {
+      formSession
+    }else {
+      "mock-session"
+    };
+
+    res.setHeader("Content-Type", "text/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderStsAssumeRole(roleArn, sessionName));
+    return();
+  }
+};

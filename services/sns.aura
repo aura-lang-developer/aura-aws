@@ -1,0 +1,161 @@
+// ==============================================================================
+// FLOCI-AURA: Amazon SNS (Simple Notification Service) & Fanout Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, generateUuid, defaultStr, getFormValue } from "./utils";
+import {
+  renderSnsCreateTopic,
+  renderSnsPublish,
+  renderSnsDeleteTopic,
+  renderSnsListSubscriptions
+} from "./xml";
+
+export fn handleSNS(req: Any, res: Any, action: String, target: String, payload: Any): Unit => {
+  let s = getState();
+
+  if (action == "CreateTopic") {
+    auditRequest(req, "SNS", 200);
+    let formTName = getFormValue(req.rawBody, "Name");
+    let tName = if (http.query(req, "Name") != "") {
+      http.query(req, "Name")
+    }else if (formTName != "") {
+      formTName
+    }else {
+      "default-topic"
+    };
+
+    let tArn = `arn:aws:sns:us-east-1:000000000000:${tName}`;
+    let newTopic = {
+      name: tName,
+      arn: tArn,
+      createdAt: "2026-09-18T12:00:00.000Z",
+      subscriptions: []
+    };
+    s.snsTopics.push(newTopic);
+    logEvent("SNS", "info", `Created SNS topic '${tName}'`);
+
+    res.setHeader("Content-Type", "text/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderSnsCreateTopic(tArn));
+    return();
+  }
+
+  if (action == "Publish") {
+    auditRequest(req, "SNS", 200);
+    let formTArn = getFormValue(req.rawBody, "TopicArn");
+    let tArn = if (http.query(req, "TopicArn") != "") {
+      http.query(req, "TopicArn")
+    }else if (formTArn != "") {
+      formTArn
+    }else {
+      ""
+    };
+
+    let formMsg = getFormValue(req.rawBody, "Message");
+    let msg = if (http.query(req, "Message") != "") {
+      http.query(req, "Message")
+    }else if (formMsg != "") {
+      formMsg
+    }else {
+      ""
+    };
+
+    let msgId = generateUuid();
+    logEvent("SNS", "info", `Published notification to topic '${tArn}'`);
+
+    // SQS Subscription Fanout: If topic has an SQS subscriber, auto-deliver!
+    let matched = s.snsTopics.filter(fn(t: Any): Bool => t.arn == tArn);
+    if (matched.length > 0) {
+      for sub in matched[0].subscriptions {
+        if (sub.protocol == "sqs") {
+          let sqsMatched = s.sqsQueues.filter(fn(q: Any): Bool => q.url == sub.endpoint || q.arn == sub.endpoint);
+          if (sqsMatched.length > 0) {
+            sqsMatched[0].messages.push({
+              messageId: `sns-fanout-${msgId}`,
+              receiptHandle: `rcpt-sns-${msgId}`,
+              body: msg,
+              sentAt: "2026-09-18T12:00:00.000Z"
+            });
+            logEvent("SNS-FANOUT", "success", `Delivered SNS event to SQS queue '${sqsMatched[0].name}'`);
+          }
+        }
+      }
+    }
+
+    res.setHeader("Content-Type", "text/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderSnsPublish(msgId));
+    return();
+  }
+
+  if (action == "Subscribe") {
+    auditRequest(req, "SNS", 200);
+    let tArn = http.query(req, "TopicArn");
+    let proto = http.query(req, "Protocol");
+    let ep = http.query(req, "Endpoint");
+    let subArn = `${tArn}:${generateUuid()}`;
+
+    let matched = s.snsTopics.filter(fn(t: Any): Bool => t.arn == tArn);
+    if (matched.length > 0) {
+      matched[0].subscriptions.push({
+        subscriptionArn: subArn,
+        protocol: proto,
+        endpoint: ep
+      });
+      logEvent("SNS", "info", `Added subscription to '${matched[0].name}'`);
+    }
+
+    http.json(res, http.StatusOK, {SubscriptionArn: subArn});
+    return();
+  }
+
+  if (action == "ListTopics") {
+    auditRequest(req, "SNS", 200);
+    let list = s.snsTopics.map(fn(t: Any): Any => {{TopicArn: t.arn}});
+    http.json(res, http.StatusOK, {Topics: list});
+    return();
+  }
+
+  if (action == "DeleteTopic") {
+    auditRequest(req, "SNS", 200);
+    let formTArn = getFormValue(req.rawBody, "TopicArn");
+    let tArn = if (http.query(req, "TopicArn") != "") {
+      http.query(req, "TopicArn")
+    }else if (formTArn != "") {
+      formTArn
+    }else {
+      defaultStr(payload.TopicArn, "")
+    };
+
+    s.snsTopics = s.snsTopics.filter(fn(t: Any): Bool => t.arn != tArn && t.name != tArn);
+    logEvent("SNS", "info", `Deleted topic '${tArn}'`);
+    res.setHeader("Content-Type", "text/xml");
+    res.writeHead(http.StatusOK);
+    res.end(renderSnsDeleteTopic());
+    return();
+  }
+
+  if (action == "ListSubscriptions" || action == "ListSubscriptionsByTopic") {
+    auditRequest(req, "SNS", 200);
+    if (target != "") {
+      let mut allSubs: List<Any> = [];
+      for t in s.snsTopics {
+        for sub in t.subscriptions {
+          allSubs.push({
+            SubscriptionArn: sub.subscriptionArn,
+            Protocol: sub.protocol,
+            Endpoint: sub.endpoint,
+            TopicArn: t.arn
+          });
+        }
+      }
+      http.json(res, http.StatusOK, {Subscriptions: allSubs});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderSnsListSubscriptions());
+    }
+    return();
+  }
+};

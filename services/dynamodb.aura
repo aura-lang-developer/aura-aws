@@ -1,0 +1,169 @@
+// ==============================================================================
+// FLOCI-AURA: Amazon DynamoDB Service Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, defaultStr, defaultList } from "./utils";
+
+export fn handleDynamoDB(req: Any, res: Any, target: String, payload: Any): Unit => {
+  let s = getState();
+  auditRequest(req, "DynamoDB", 200);
+
+  if (target.endsWith("CreateTable")) {
+    let tblName = payload.TableName;
+    let kSchema = if (payload.KeySchema != ()) {
+      payload.KeySchema
+    }else {
+      [ {AttributeName: "id", KeyType: "HASH"}]
+    };
+    let attrDefs = defaultList(payload.AttributeDefinitions);
+
+    let newTable = {
+      name: tblName,
+      status: "ACTIVE",
+      pk: "id",
+      keySchema: kSchema,
+      attributeDefinitions: attrDefs,
+      createdAt: "2026-09-18T12:00:00.000Z",
+      items: []
+    };
+    s.dynamoTables.push(newTable);
+    logEvent("DYNAMODB", "info", `Created table '${tblName}'`);
+    http.json(res, http.StatusOK, {
+      TableDescription: {
+        TableName: tblName,
+        TableStatus: "ACTIVE",
+        ItemCount: 0,
+        KeySchema: newTable.keySchema,
+        AttributeDefinitions: newTable.attributeDefinitions
+      }
+    });
+    return();
+  }
+
+  if (target.endsWith("ListTables")) {
+    let names = s.dynamoTables.map(fn(t: Any): String => t.name);
+    http.json(res, http.StatusOK, {TableNames: names});
+    return();
+  }
+
+  if (target.endsWith("DescribeTable")) {
+    let tblName = payload.TableName;
+    let matched = s.dynamoTables.filter(fn(t: Any): Bool => t.name == tblName);
+    if (matched.length > 0) {
+      let t = matched[0];
+      http.json(res, http.StatusOK, {
+        Table: {
+          TableName: t.name,
+          TableStatus: t.status,
+          ItemCount: t.items.length,
+          KeySchema: t.keySchema
+        }
+      });
+    }else {
+      http.json(res, http.StatusNotFound, {
+        __type: "com.amazonaws.dynamodb.v20120810#ResourceNotFoundException",
+        message: `Cannot do operations on a non-existent table: ${tblName}`
+      });
+    }
+    return();
+  }
+
+  if (target.endsWith("PutItem")) {
+    let tblName = payload.TableName;
+    let item = payload.Item;
+    let matched = s.dynamoTables.filter(fn(t: Any): Bool => t.name == tblName);
+    if (matched.length > 0) {
+      matched[0].items.push(item);
+      logEvent("DYNAMODB", "info", `PutItem into table '${tblName}'`);
+    }
+    http.json(res, http.StatusOK, {});
+    return();
+  }
+
+  if (target.endsWith("GetItem")) {
+    let tblName = payload.TableName;
+    let matched = s.dynamoTables.filter(fn(t: Any): Bool => t.name == tblName);
+    if (matched.length > 0 && matched[0].items.length > 0) {
+      http.json(res, http.StatusOK, {Item: matched[0].items[0]});
+    }else {
+      http.json(res, http.StatusOK, {});
+    }
+    return();
+  }
+
+  if (target.endsWith("Scan") || target.endsWith("Query")) {
+    let tblName = payload.TableName;
+    let matched = s.dynamoTables.filter(fn(t: Any): Bool => t.name == tblName);
+    let items = if (matched.length > 0) {matched[0].items}else {[]};
+    http.json(res, http.StatusOK, {
+      Items: items,
+      Count: items.length,
+      ScannedCount: items.length
+    });
+    return();
+  }
+
+  if (target.endsWith("DeleteItem")) {
+    let tblName = payload.TableName;
+    let matched = s.dynamoTables.filter(fn(t: Any): Bool => t.name == tblName);
+    if (matched.length > 0) {
+      let t = matched[0];
+      let pkName = t.pk;
+      let keyObj = payload.Key;
+      if (keyObj != ()) {
+        t.items = t.items.filter(fn(it: Any): Bool => {
+          let itVal = it[pkName];
+          let targetVal = keyObj[pkName];
+          if (itVal != () && targetVal != ()) {
+            let s1 = defaultStr(itVal.S, "");
+            let s2 = defaultStr(targetVal.S, "");
+            let n1 = defaultStr(itVal.N, "");
+            let n2 = defaultStr(targetVal.N, "");
+            return !((s1 != "" && s1 == s2) || (n1 != "" && n1 == n2));
+          }
+          return true;
+        });
+      }
+      logEvent("DYNAMODB", "info", `DeleteItem from table '${tblName}'`);
+    }
+    http.json(res, http.StatusOK, {});
+    return();
+  }
+
+  if (target.endsWith("UpdateItem")) {
+    let tblName = payload.TableName;
+    let matched = s.dynamoTables.filter(fn(t: Any): Bool => t.name == tblName);
+    if (matched.length > 0) {
+      let t = matched[0];
+      let keyObj = payload.Key;
+      let pkName = t.pk;
+      let found = t.items.filter(fn(it: Any): Bool => {
+        let itVal = it[pkName];
+        let targetVal = keyObj[pkName];
+        if (itVal != () && targetVal != ()) {
+          let s1 = defaultStr(itVal.S, "");
+          let s2 = defaultStr(targetVal.S, "");
+          return s1 != "" && s1 == s2;
+        }
+        return false;
+      });
+      if (found.length == 0 && keyObj != ()) {
+        t.items.push(keyObj);
+      }
+      logEvent("DYNAMODB", "info", `UpdateItem in table '${tblName}'`);
+    }
+    http.json(res, http.StatusOK, {Attributes: payload.Key});
+    return();
+  }
+
+  if (target.endsWith("DeleteTable")) {
+    let tblName = payload.TableName;
+    s.dynamoTables = s.dynamoTables.filter(fn(t: Any): Bool => t.name != tblName);
+    logEvent("DYNAMODB", "info", `Deleted table '${tblName}'`);
+    http.json(res, http.StatusOK, {TableDescription: {TableName: tblName, TableStatus: "DELETING"}});
+    return();
+  }
+
+  http.json(res, http.StatusOK, {});
+};

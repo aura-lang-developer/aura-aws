@@ -1,0 +1,193 @@
+// ==============================================================================
+// FLOCI-AURA: In-Memory Cloud State Store
+// ==============================================================================
+
+export type CloudStore = {
+  s3Buckets: List<Any>,
+  s3Objects: List<Any>,
+  dynamoTables: List<Any>,
+  sqsQueues: List<Any>,
+  snsTopics: List<Any>,
+  lambdaFunctions: List<Any>,
+  secrets: List<Any>,
+  ssmParameters: List<Any>,
+  kmsKeys: List<Any>,
+  cwLogGroups: List<Any>,
+  liveLogs: List<Any>,
+  eventBuses: List<Any>,
+  iamUsers: List<Any>,
+  iamRoles: List<Any>,
+  requestAuditLog: List<Any>,
+  totalRequestsCount: Int,
+  bootTimestamp: Int,
+  nextIdCounter: Int
+};
+
+let storeInstance: CloudStore = {
+  s3Buckets: [
+    {name: "default-bucket", region: "us-east-1", createdAt: "2026-09-18T12:00:00.000Z"}
+  ],
+  s3Objects: [
+    {
+      bucket: "default-bucket",
+      key: "welcome.txt",
+      content: "Welcome to Floci-Aura! The ultra-fast local AWS emulator written in Aura Lang.",
+      size: 78,
+      contentType: "text/plain",
+      etag: "\"9f8a3c2b1e4d5f6a\"",
+      lastModified: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  dynamoTables: [
+    {
+      name: "users",
+      status: "ACTIVE",
+      pk: "id",
+      keySchema: [ {AttributeName: "id", KeyType: "HASH"}],
+      attributeDefinitions: [ {AttributeName: "id", AttributeType: "S"}],
+      createdAt: "2026-09-18T12:00:00.000Z",
+      items: [
+        {id: {S: "usr-1001"}, name: {S: "Alice"}, role: {S: "Admin"}},
+        {id: {S: "usr-1002"}, name: {S: "Bob"}, role: {S: "Developer"}}
+      ]
+    }
+  ],
+  sqsQueues: [
+    {
+      name: "notifications",
+      url: "http://localhost:4566/000000000000/notifications",
+      arn: "arn:aws:sqs:us-east-1:000000000000:notifications",
+      createdAt: "2026-09-18T12:00:00.000Z",
+      messages: [
+        {
+          messageId: "msg-0001-init",
+          receiptHandle: "rcpt-0001-init",
+          body: "{\"event\":\"SystemReady\",\"engine\":\"Aura-Lang\"}",
+          sentAt: "2026-09-18T12:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  snsTopics: [
+    {
+      name: "system-alerts",
+      arn: "arn:aws:sns:us-east-1:000000000000:system-alerts",
+      createdAt: "2026-09-18T12:00:00.000Z",
+      subscriptions: [
+        {
+          subscriptionArn: "arn:aws:sns:us-east-1:000000000000:system-alerts:sub-1",
+          protocol: "sqs",
+          endpoint: "http://localhost:4566/000000000000/notifications"
+        }
+      ]
+    }
+  ],
+  lambdaFunctions: [
+    {
+      name: "healthCheck",
+      arn: "arn:aws:lambda:us-east-1:000000000000:function:healthCheck",
+      runtime: "nodejs20.x",
+      handler: "index.handler",
+      timeout: 3,
+      memorySize: 128,
+      lastModified: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  secrets: [
+    {
+      name: "prod/db/credentials",
+      arn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:prod/db/credentials",
+      value: "{\"username\":\"admin\",\"password\":\"floci_aura_secure_pass_2026\"}",
+      description: "Production Postgres master credentials",
+      versionId: "ver-1001",
+      createdAt: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  ssmParameters: [
+    {
+      name: "/app/config/environment",
+      type: "String",
+      value: "local-development",
+      version: 1,
+      description: "App runtime environment",
+      lastModified: "2026-09-18T12:00:00.000Z"
+    },
+    {
+      name: "/app/config/api_key",
+      type: "SecureString",
+      value: "aura_live_secret_key_882910",
+      version: 1,
+      description: "Secret API Gateway key",
+      lastModified: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  kmsKeys: [
+    {
+      keyId: "1234abcd-12ab-34cd-56ef-1234567890ab",
+      arn: "arn:aws:kms:us-east-1:000000000000:key/1234abcd-12ab-34cd-56ef-1234567890ab",
+      description: "Default Master Key for Floci-Aura",
+      enabled: true,
+      createdAt: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  cwLogGroups: [
+    {
+      name: "/aws/lambda/healthCheck",
+      arn: "arn:aws:logs:us-east-1:000000000000:log-group:/aws/lambda/healthCheck",
+      streams: ["2026/09/18/[$LATEST]abc1234"],
+      createdAt: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  liveLogs: [
+    {timestamp: "12:00:00", level: "info", service: "AURA-CORE", message: "Floci-Aura emulator booted in 1.84ms with zero JVM overhead"},
+    {timestamp: "12:00:01", level: "success", service: "SERVICEMUX", message: "Listening on http://localhost:4566 (AWS wire protocol dispatcher)"}
+  ],
+  eventBuses: [
+    {name: "default", arn: "arn:aws:events:us-east-1:000000000000:event-bus/default", rules: []}
+  ],
+  iamUsers: [
+    {name: "admin-user", arn: "arn:aws:iam::000000000000:user/admin-user", userId: "AIDA000000000000ADMIN", createdAt: "2026-09-18T12:00:00.000Z"}
+  ],
+  iamRoles: [
+    {
+      roleName: "admin-role",
+      arn: "arn:aws:iam::000000000000:role/admin-role",
+      roleId: "AROA000000000000ADMIN",
+      assumeRolePolicyDocument: "%7B%22Version%22%3A%222012-10-17%22%7D",
+      createdAt: "2026-09-18T12:00:00.000Z"
+    }
+  ],
+  requestAuditLog: [],
+  totalRequestsCount: 0,
+  bootTimestamp: time.now(),
+  nextIdCounter: 1000
+};
+
+export fn getState(): Any => {
+  storeInstance
+};
+
+export fn incrementRequestsCount(): Unit => {
+  storeInstance.totalRequestsCount = storeInstance.totalRequestsCount + 1;
+};
+
+export fn clearRequestAuditLog(): Unit => {
+  storeInstance.requestAuditLog = [];
+};
+
+export fn resetState(): Unit => {
+  storeInstance.s3Buckets = [];
+  storeInstance.s3Objects = [];
+  storeInstance.dynamoTables = [];
+  storeInstance.sqsQueues = [];
+  storeInstance.snsTopics = [];
+  storeInstance.lambdaFunctions = [];
+  storeInstance.secrets = [];
+  storeInstance.ssmParameters = [];
+  storeInstance.kmsKeys = [];
+  storeInstance.eventBuses = [];
+  storeInstance.iamUsers = [];
+  storeInstance.iamRoles = [];
+  storeInstance.requestAuditLog = [];
+  storeInstance.liveLogs = [];
+};

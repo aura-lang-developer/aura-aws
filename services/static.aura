@@ -1,0 +1,85 @@
+// ==============================================================================
+// FLOCI-AURA: Embedded Web Console & Promotional Website File Serving
+// ==============================================================================
+
+export fn resolveStaticPath(relPath: String): String => {
+  let cwd = process.cwd();
+  let candidate1 = `${cwd}/${relPath}`;
+  if (fs.existsSync(candidate1)) {
+    candidate1
+  }else {
+    let candidate2 = `${cwd}/floci-aura/${relPath}`;
+    if (fs.existsSync(candidate2)) {
+      candidate2
+    }else {
+      let candidate3 = `${cwd}/projects/floci-aura/${relPath}`;
+      if (fs.existsSync(candidate3)) {
+        candidate3
+      }else {
+        candidate1
+      }
+    }
+  }
+};
+
+export fn registerStaticRoutes(mux: Any): Unit => {
+  // Web Console UI routes
+  mux.get("/_floci/ui", fn(req: Any, res: Any) => {
+    let htmlPath = resolveStaticPath("ui/index.html");
+    http.serveFile(res, req, htmlPath);
+  });
+
+  mux.get("/_floci/ui/style.css", fn(req: Any, res: Any) => {
+    let cssPath = resolveStaticPath("ui/style.css");
+    http.serveFile(res, req, cssPath);
+  });
+
+  mux.get("/_floci/style.css", fn(req: Any, res: Any) => {
+    let cssPath = resolveStaticPath("ui/style.css");
+    http.serveFile(res, req, cssPath);
+  });
+
+  mux.get("/_floci/ui/app.js", fn(req: Any, res: Any) => {
+    let jsPath = resolveStaticPath("ui/app.js");
+    http.serveFile(res, req, jsPath);
+  });
+
+  mux.get("/_floci/app.js", fn(req: Any, res: Any) => {
+    let jsPath = resolveStaticPath("ui/app.js");
+    http.serveFile(res, req, jsPath);
+  });
+
+  mux.get("/ui", fn(req: Any, res: Any) => {
+    http.redirect(res, "/_floci/ui", 302);
+  });
+
+  // Promotional Website routes
+  mux.get("/site", fn(req: Any, res: Any) => {
+    let htmlPath = resolveStaticPath("website/index.html");
+    http.serveFile(res, req, htmlPath);
+  });
+
+  mux.get("/website", fn(req: Any, res: Any) => {
+    http.redirect(res, "/site", 302);
+  });
+
+  mux.get("/site/style.css", fn(req: Any, res: Any) => {
+    let cssPath = resolveStaticPath("website/style.css");
+    http.serveFile(res, req, cssPath);
+  });
+
+  mux.get("/style.css", fn(req: Any, res: Any) => {
+    let cssPath = resolveStaticPath("website/style.css");
+    http.serveFile(res, req, cssPath);
+  });
+
+  mux.get("/site/app.js", fn(req: Any, res: Any) => {
+    let jsPath = resolveStaticPath("website/app.js");
+    http.serveFile(res, req, jsPath);
+  });
+
+  mux.get("/app.js", fn(req: Any, res: Any) => {
+    let jsPath = resolveStaticPath("website/app.js");
+    http.serveFile(res, req, jsPath);
+  });
+};

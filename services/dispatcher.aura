@@ -1,0 +1,110 @@
+// ==============================================================================
+// FLOCI-AURA: AWS Wire Protocol Root POST Dispatcher
+// ==============================================================================
+
+import { auditRequest, safeParseJson, getFormValue } from "./utils";
+import { handleDynamoDB } from "./dynamodb";
+import { handleKMS } from "./kms";
+import { handleSecretsManager } from "./secretsmanager";
+import { handleSSM } from "./ssm";
+import { handleLogs } from "./logs";
+import { handleEventBridge } from "./eventbridge";
+import { handleSTS } from "./sts";
+import { handleSQS } from "./sqs";
+import { handleSNS } from "./sns";
+import { handleIAM } from "./iam";
+
+export fn registerDispatcherRoute(mux: Any): Unit => {
+  mux.post("/", fn(req: Any, res: Any) => {
+    let headers = req.headers;
+    let target = if (headers != () && headers["x-amz-target"] != ()) {
+      `${headers["x-amz-target"]}`
+    }else {
+      ""
+    };
+
+    let queryAction = http.query(req, "Action");
+    let bodyAction = getFormValue(req.rawBody, "Action");
+    let action = if (queryAction != "") {
+      queryAction
+    }else if (bodyAction != "") {
+      bodyAction
+    }else {
+      ""
+    };
+
+    let payload = safeParseJson(req.rawBody);
+
+    // 1. DynamoDB Service
+    if (target.startsWith("DynamoDB_20120810.")) {
+      handleDynamoDB(req, res, target, payload);
+      return();
+    }
+
+    // 2. KMS Key Management
+    if (target.startsWith("TrentService.")) {
+      handleKMS(req, res, target, payload);
+      return();
+    }
+
+    // 3. Secrets Manager
+    if (target.startsWith("secretsmanager.")) {
+      handleSecretsManager(req, res, target, payload);
+      return();
+    }
+
+    // 4. SSM Parameter Store
+    if (target.startsWith("AmazonSSM.")) {
+      handleSSM(req, res, target, payload);
+      return();
+    }
+
+    // 5. CloudWatch Logs
+    if (target.startsWith("Logs_20140328.")) {
+      handleLogs(req, res, target, payload);
+      return();
+    }
+
+    // 6. EventBridge
+    if (target.startsWith("AWSEvents.")) {
+      handleEventBridge(req, res, target, payload);
+      return();
+    }
+
+    // 7. STS Caller Identity & Assume Role
+    if (action == "GetCallerIdentity" || action == "AssumeRole") {
+      handleSTS(req, res, action);
+      return();
+    }
+
+    // 8. SQS Queue Actions
+    if (action == "CreateQueue" || target.endsWith("CreateQueue") ||
+        action == "ListQueues" || target.endsWith("ListQueues") ||
+        action == "GetQueueUrl" || target.endsWith("GetQueueUrl") ||
+        action == "SendMessage" || target.endsWith("SendMessage") ||
+        action == "ReceiveMessage" || target.endsWith("ReceiveMessage") ||
+        action == "DeleteMessage" || target.endsWith("DeleteMessage") ||
+        action == "PurgeQueue" || action == "DeleteQueue") {
+      handleSQS(req, res, action, target, payload);
+      return();
+    }
+
+    // 9. SNS Publish & Topics
+    if (action == "CreateTopic" || action == "Publish" || action == "Subscribe" ||
+        action == "ListTopics" || action == "DeleteTopic" ||
+        action == "ListSubscriptions" || action == "ListSubscriptionsByTopic") {
+      handleSNS(req, res, action, target, payload);
+      return();
+    }
+
+    // 10. IAM Users & Roles
+    if (action == "CreateUser" || action == "ListUsers" || action == "CreateRole" || action == "ListRoles") {
+      handleIAM(req, res, action);
+      return();
+    }
+
+    // Fallback for root POST
+    auditRequest(req, "UNKNOWN-AWS", 200);
+    http.json(res, http.StatusOK, {message: "Floci-Aura wire request received", target: target, action: action});
+  });
+};

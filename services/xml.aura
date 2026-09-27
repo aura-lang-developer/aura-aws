@@ -1,0 +1,153 @@
+// ==============================================================================
+// FLOCI-AURA: XML Response Helpers & Protocol Serializers
+// ==============================================================================
+
+import { getState } from "./state";
+import { generateUuid } from "./utils";
+
+export fn xmlWrap(tag: String, content: String): String => {
+  `<${tag}>${content}</${tag}>`
+};
+
+export fn renderS3ListBuckets(): String => {
+  let s = getState();
+  let mut bucketsXml = "";
+  for b in s.s3Buckets {
+    let item = xmlWrap("Name", b.name) + xmlWrap("CreationDate", b.createdAt);
+    bucketsXml = bucketsXml + xmlWrap("Bucket", item);
+  }
+  let owner = xmlWrap("ID", "000000000000") + xmlWrap("DisplayName", "floci-aura");
+  let body = xmlWrap("Owner", owner) + xmlWrap("Buckets", bucketsXml);
+  `<?xml version="1.0" encoding="UTF-8"?>\n<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">\n${body}\n</ListAllMyBucketsResult>`
+};
+
+export fn renderS3ListObjects(bucketName: String, prefix: String): String => {
+  let s = getState();
+  let mut objectsXml = "";
+  let matched = s.s3Objects.filter(fn(o: Any): Bool => o.bucket == bucketName && (prefix == "" || o.key.startsWith(prefix)));
+  for o in matched {
+    let item = xmlWrap("Key", o.key) +
+    xmlWrap("LastModified", o.lastModified) +
+    xmlWrap("ETag", o.etag) +
+    xmlWrap("Size", `${o.size}`) +
+    xmlWrap("StorageClass", "STANDARD");
+    objectsXml = objectsXml + xmlWrap("Contents", item);
+  }
+  let meta = xmlWrap("Name", bucketName) +
+  xmlWrap("Prefix", prefix) +
+  xmlWrap("MaxKeys", "1000") +
+  xmlWrap("IsTruncated", "false") +
+  xmlWrap("KeyCount", `${matched.length}`);
+  `<?xml version="1.0" encoding="UTF-8"?>\n<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">\n${meta}\n${objectsXml}\n</ListBucketResult>`
+};
+
+export fn renderStsCallerIdentity(): String => {
+  let inner = xmlWrap("Arn", "arn:aws:iam::000000000000:root") +
+  xmlWrap("UserId", "AKIAIOSFODNN7EXAMPLE") +
+  xmlWrap("Account", "000000000000");
+  let result = xmlWrap("GetCallerIdentityResult", inner);
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<GetCallerIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">\n${result}\n${meta}\n</GetCallerIdentityResponse>`
+};
+
+export fn renderStsAssumeRole(roleArn: String, sessionName: String): String => {
+  let creds = xmlWrap("AccessKeyId", "ASIAIOSFODNN7EXAMPLE") +
+  xmlWrap("SecretAccessKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY") +
+  xmlWrap("SessionToken", "AQoDYXdzEJr111111111111111111111111111111111111111111111111") +
+  xmlWrap("Expiration", "2026-09-26T12:00:00.000Z");
+  let user = xmlWrap("Arn", `arn:aws:sts::000000000000:assumed-role/mock-role/${sessionName}`) +
+  xmlWrap("AssumedRoleId", `AROA000000000000:${sessionName}`);
+  let result = xmlWrap("AssumeRoleResult", xmlWrap("Credentials", creds) + xmlWrap("AssumedRoleUser", user));
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<AssumeRoleResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">\n${result}\n${meta}\n</AssumeRoleResponse>`
+};
+
+export fn renderSqsCreateQueue(qUrl: String): String => {
+  let inner = xmlWrap("QueueUrl", qUrl);
+  let result = xmlWrap("CreateQueueResult", inner);
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<CreateQueueResponse>\n${result}\n${meta}\n</CreateQueueResponse>`
+};
+
+export fn renderSqsGetQueueUrl(qUrl: String): String => {
+  let inner = xmlWrap("QueueUrl", qUrl);
+  let result = xmlWrap("GetQueueUrlResult", inner);
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<GetQueueUrlResponse>\n${result}\n${meta}\n</GetQueueUrlResponse>`
+};
+
+export fn renderSqsSendMessage(msgId: String): String => {
+  let inner = xmlWrap("MD5OfMessageBody", "7b226f726465724964223a343931327d") +
+  xmlWrap("MessageId", msgId);
+  let result = xmlWrap("SendMessageResult", inner);
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<SendMessageResponse>\n${result}\n${meta}\n</SendMessageResponse>`
+};
+
+export fn renderSqsDeleteMessage(): String => {
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<DeleteMessageResponse>\n${meta}\n</DeleteMessageResponse>`
+};
+
+export fn renderSnsCreateTopic(topicArn: String): String => {
+  let inner = xmlWrap("TopicArn", topicArn);
+  let result = xmlWrap("CreateTopicResult", inner);
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<CreateTopicResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">\n${result}\n${meta}\n</CreateTopicResponse>`
+};
+
+export fn renderSnsDeleteTopic(): String => {
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<DeleteTopicResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">\n${meta}\n</DeleteTopicResponse>`
+};
+
+export fn renderSnsPublish(msgId: String): String => {
+  let inner = xmlWrap("MessageId", msgId);
+  let result = xmlWrap("PublishResult", inner);
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<PublishResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">\n${result}\n${meta}\n</PublishResponse>`
+};
+
+export fn renderSnsListSubscriptions(): String => {
+  let s = getState();
+  let mut subsXml = "";
+  for t in s.snsTopics {
+    for sub in t.subscriptions {
+      let item = xmlWrap("SubscriptionArn", sub.subscriptionArn) +
+      xmlWrap("Owner", "000000000000") +
+      xmlWrap("Protocol", sub.protocol) +
+      xmlWrap("Endpoint", sub.endpoint) +
+      xmlWrap("TopicArn", t.arn);
+      subsXml = subsXml + xmlWrap("member", item);
+    }
+  }
+  let result = xmlWrap("ListSubscriptionsResult", xmlWrap("Subscriptions", subsXml));
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<ListSubscriptionsResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">\n${result}\n${meta}\n</ListSubscriptionsResponse>`
+};
+
+export fn renderIamCreateRole(role: Any): String => {
+  let r = xmlWrap("RoleId", role.roleId) +
+  xmlWrap("Arn", role.arn) +
+  xmlWrap("RoleName", role.roleName) +
+  xmlWrap("CreateDate", role.createdAt) +
+  xmlWrap("AssumeRolePolicyDocument", role.assumeRolePolicyDocument);
+  let result = xmlWrap("CreateRoleResult", xmlWrap("Role", r));
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<CreateRoleResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">\n${result}\n${meta}\n</CreateRoleResponse>`
+};
+
+export fn renderIamListRoles(): String => {
+  let s = getState();
+  let mut rolesXml = "";
+  for r in s.iamRoles {
+    let item = xmlWrap("RoleId", r.roleId) +
+    xmlWrap("Arn", r.arn) +
+    xmlWrap("RoleName", r.roleName) +
+    xmlWrap("CreateDate", r.createdAt);
+    rolesXml = rolesXml + xmlWrap("member", item);
+  }
+  let result = xmlWrap("ListRolesResult", xmlWrap("Roles", rolesXml));
+  let meta = xmlWrap("ResponseMetadata", xmlWrap("RequestId", generateUuid()));
+  `<?xml version="1.0" encoding="UTF-8"?>\n<ListRolesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">\n${result}\n${meta}\n</ListRolesResponse>`
+};

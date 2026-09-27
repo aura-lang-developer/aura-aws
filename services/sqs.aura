@@ -1,0 +1,197 @@
+// ==============================================================================
+// FLOCI-AURA: Amazon SQS (Simple Queue Service) Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, generateUuid, defaultStr, getFormValue } from "./utils";
+import {
+  renderSqsCreateQueue,
+  renderSqsGetQueueUrl,
+  renderSqsSendMessage,
+  renderSqsDeleteMessage
+} from "./xml";
+
+export fn handleSQS(req: Any, res: Any, action: String, target: String, payload: Any): Unit => {
+  let s = getState();
+
+  if (action == "CreateQueue" || target.endsWith("CreateQueue")) {
+    auditRequest(req, "SQS", 200);
+    let formQName = getFormValue(req.rawBody, "QueueName");
+    let qName = if (http.query(req, "QueueName") != "") {
+      http.query(req, "QueueName")
+    }else if (formQName != "") {
+      formQName
+    }else {
+      defaultStr(payload.QueueName, "default-queue")
+    };
+
+    let qUrl = `http://localhost:4566/000000000000/${qName}`;
+    let newQueue = {
+      name: qName,
+      url: qUrl,
+      arn: `arn:aws:sqs:us-east-1:000000000000:${qName}`,
+      createdAt: "2026-09-18T12:00:00.000Z",
+      messages: []
+    };
+    s.sqsQueues.push(newQueue);
+    logEvent("SQS", "info", `Created queue '${qName}'`);
+
+    if (target != "") {
+      http.json(res, http.StatusOK, {QueueUrl: qUrl});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderSqsCreateQueue(qUrl));
+    }
+    return();
+  }
+
+  if (action == "ListQueues" || target.endsWith("ListQueues")) {
+    auditRequest(req, "SQS", 200);
+    let urls = s.sqsQueues.map(fn(q: Any): String => q.url);
+    http.json(res, http.StatusOK, {QueueUrls: urls});
+    return();
+  }
+
+  if (action == "GetQueueUrl" || target.endsWith("GetQueueUrl")) {
+    auditRequest(req, "SQS", 200);
+    let formQName = getFormValue(req.rawBody, "QueueName");
+    let qName = if (http.query(req, "QueueName") != "") {
+      http.query(req, "QueueName")
+    }else if (formQName != "") {
+      formQName
+    }else {
+      defaultStr(payload.QueueName, "")
+    };
+
+    let qUrl = `http://localhost:4566/000000000000/${qName}`;
+    if (target != "") {
+      http.json(res, http.StatusOK, {QueueUrl: qUrl});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderSqsGetQueueUrl(qUrl));
+    }
+    return();
+  }
+
+  if (action == "SendMessage" || target.endsWith("SendMessage")) {
+    auditRequest(req, "SQS", 200);
+    let formQUrl = getFormValue(req.rawBody, "QueueUrl");
+    let qUrl = if (http.query(req, "QueueUrl") != "") {
+      http.query(req, "QueueUrl")
+    }else if (formQUrl != "") {
+      formQUrl
+    }else {
+      defaultStr(payload.QueueUrl, "")
+    };
+
+    let formMsg = getFormValue(req.rawBody, "MessageBody");
+    let msgBody = if (http.query(req, "MessageBody") != "") {
+      http.query(req, "MessageBody")
+    }else if (formMsg != "") {
+      formMsg
+    }else {
+      defaultStr(payload.MessageBody, "")
+    };
+
+    let msgId = generateUuid();
+    let matched = s.sqsQueues.filter(fn(q: Any): Bool => q.url == qUrl || q.name == qUrl);
+    if (matched.length > 0) {
+      matched[0].messages.push({
+        messageId: msgId,
+        receiptHandle: `rcpt-${msgId}`,
+        body: msgBody,
+        sentAt: "2026-09-18T12:00:00.000Z"
+      });
+      logEvent("SQS", "info", `Enqueued message into '${matched[0].name}'`);
+    }
+
+    if (target != "") {
+      http.json(res, http.StatusOK, {MD5OfMessageBody: "mock-md5", MessageId: msgId});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderSqsSendMessage(msgId));
+    }
+    return();
+  }
+
+  if (action == "ReceiveMessage" || target.endsWith("ReceiveMessage")) {
+    auditRequest(req, "SQS", 200);
+    let formQUrl = getFormValue(req.rawBody, "QueueUrl");
+    let qUrl = if (http.query(req, "QueueUrl") != "") {
+      http.query(req, "QueueUrl")
+    }else if (formQUrl != "") {
+      formQUrl
+    }else {
+      defaultStr(payload.QueueUrl, "")
+    };
+
+    let matched = s.sqsQueues.filter(fn(q: Any): Bool => q.url == qUrl || q.name == qUrl);
+    let msgs = if (matched.length > 0) {matched[0].messages}else {[]};
+    http.json(res, http.StatusOK, {Messages: msgs});
+    return();
+  }
+
+  if (action == "DeleteMessage" || target.endsWith("DeleteMessage")) {
+    auditRequest(req, "SQS", 200);
+    let formQUrl = getFormValue(req.rawBody, "QueueUrl");
+    let qUrl = if (http.query(req, "QueueUrl") != "") {
+      http.query(req, "QueueUrl")
+    }else if (formQUrl != "") {
+      formQUrl
+    }else {
+      defaultStr(payload.QueueUrl, "")
+    };
+
+    let formHandle = getFormValue(req.rawBody, "ReceiptHandle");
+    let handle = if (http.query(req, "ReceiptHandle") != "") {
+      http.query(req, "ReceiptHandle")
+    }else if (formHandle != "") {
+      formHandle
+    }else {
+      defaultStr(payload.ReceiptHandle, "")
+    };
+
+    let matched = s.sqsQueues.filter(fn(q: Any): Bool => q.url == qUrl || q.name == qUrl);
+    if (matched.length > 0) {
+      matched[0].messages = matched[0].messages.filter(fn(m: Any): Bool => m.receiptHandle != handle && m.messageId != handle);
+      logEvent("SQS", "info", `Deleted message from queue '${matched[0].name}'`);
+    }
+
+    if (target != "") {
+      http.json(res, http.StatusOK, {});
+    }else {
+      res.setHeader("Content-Type", "text/xml");
+      res.writeHead(http.StatusOK);
+      res.end(renderSqsDeleteMessage());
+    }
+    return();
+  }
+
+  if (action == "PurgeQueue" || action == "DeleteQueue") {
+    auditRequest(req, "SQS", 200);
+    let formQUrl = getFormValue(req.rawBody, "QueueUrl");
+    let qUrl = if (http.query(req, "QueueUrl") != "") {
+      http.query(req, "QueueUrl")
+    }else if (formQUrl != "") {
+      formQUrl
+    }else {
+      defaultStr(payload.QueueUrl, "")
+    };
+
+    let matched = s.sqsQueues.filter(fn(q: Any): Bool => q.url == qUrl || q.name == qUrl);
+    if (matched.length > 0) {
+      if (action == "PurgeQueue") {
+        matched[0].messages = [];
+        logEvent("SQS", "info", `Purged queue '${matched[0].name}'`);
+      }else {
+        s.sqsQueues = s.sqsQueues.filter(fn(q: Any): Bool => q.url != qUrl);
+        logEvent("SQS", "info", `Deleted queue '${matched[0].name}'`);
+      }
+    }
+    http.json(res, http.StatusOK, {});
+    return();
+  }
+};

@@ -1,0 +1,68 @@
+// ==============================================================================
+// FLOCI-AURA: AWS SSM Parameter Store Service Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, defaultStr } from "./utils";
+
+export fn handleSSM(req: Any, res: Any, target: String, payload: Any): Unit => {
+  let s = getState();
+  auditRequest(req, "SSM", 200);
+
+  if (target.endsWith("PutParameter")) {
+    let pName = payload.Name;
+    let item = {
+      name: pName,
+      type: defaultStr(payload.Type, "String"),
+      value: defaultStr(payload.Value, ""),
+      version: 1,
+      description: defaultStr(payload.Description, ""),
+      lastModified: "2026-09-18T12:00:00.000Z"
+    };
+    s.ssmParameters = s.ssmParameters.filter(fn(p: Any): Bool => p.name != pName);
+    s.ssmParameters.push(item);
+    logEvent("SSM", "info", `Put parameter '${pName}'`);
+    http.json(res, http.StatusOK, {Version: 1, Tier: "Standard"});
+    return();
+  }
+
+  if (target.endsWith("GetParameter")) {
+    let pName = payload.Name;
+    let matched = s.ssmParameters.filter(fn(p: Any): Bool => p.name == pName);
+    if (matched.length > 0) {
+      let p = matched[0];
+      http.json(res, http.StatusOK, {
+        Parameter: {
+          Name: p.name,
+          Type: p.type,
+          Value: p.value,
+          Version: p.version,
+          LastModifiedDate: 1726660800
+        }
+      });
+    }else {
+      http.json(res, http.StatusNotFound, {
+        __type: "ParameterNotFound",
+        message: `Parameter '${pName}' not found`
+      });
+    }
+    return();
+  }
+
+  if (target.endsWith("GetParametersByPath")) {
+    let pathPrefix = defaultStr(payload.Path, "/");
+    let matched = s.ssmParameters.filter(fn(p: Any): Bool => p.name.startsWith(pathPrefix));
+    http.json(res, http.StatusOK, {Parameters: matched});
+    return();
+  }
+
+  if (target.endsWith("DeleteParameter")) {
+    let pName = payload.Name;
+    s.ssmParameters = s.ssmParameters.filter(fn(p: Any): Bool => p.name != pName);
+    logEvent("SSM", "info", `Deleted parameter '${pName}'`);
+    http.json(res, http.StatusOK, {});
+    return();
+  }
+
+  http.json(res, http.StatusOK, {});
+};

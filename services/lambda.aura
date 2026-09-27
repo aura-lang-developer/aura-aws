@@ -1,0 +1,84 @@
+// ==============================================================================
+// FLOCI-AURA: AWS Lambda Serverless Service REST API
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, safeParseJson, generateUuid, defaultStr, defaultInt } from "./utils";
+
+export fn registerLambdaRoutes(mux: Any): Unit => {
+  // Create Function: POST /2015-03-31/functions
+  mux.post("/2015-03-31/functions", fn(req: Any, res: Any) => {
+    let s = getState();
+    let payload = safeParseJson(req.rawBody);
+    let fName = defaultStr(payload.FunctionName, "function");
+    let fArn = `arn:aws:lambda:us-east-1:000000000000:function:${fName}`;
+
+    let newFunc = {
+      name: fName,
+      arn: fArn,
+      runtime: defaultStr(payload.Runtime, "nodejs20.x"),
+      handler: defaultStr(payload.Handler, "index.handler"),
+      timeout: defaultInt(payload.Timeout, 3),
+      memorySize: defaultInt(payload.MemorySize, 128),
+      lastModified: "2026-09-18T12:00:00.000Z"
+    };
+
+    s.lambdaFunctions.push(newFunc);
+    auditRequest(req, "Lambda", 201);
+    logEvent("LAMBDA", "info", `Registered function '${fName}'`);
+
+    http.json(res, http.StatusCreated, newFunc);
+  });
+
+  // List Functions: GET /2015-03-31/functions
+  mux.get("/2015-03-31/functions", fn(req: Any, res: Any) => {
+    let s = getState();
+    auditRequest(req, "Lambda", 200);
+    http.json(res, http.StatusOK, {Functions: s.lambdaFunctions});
+  });
+
+  // Get Function: GET /2015-03-31/functions/:name
+  mux.get("/2015-03-31/functions/:name", fn(req: Any, res: Any) => {
+    let s = getState();
+    let fName = http.pathValue(req, "name");
+    auditRequest(req, "Lambda", 200);
+    let matched = s.lambdaFunctions.filter(fn(f: Any): Bool => f.name == fName);
+    if (matched.length > 0) {
+      http.json(res, http.StatusOK, {Configuration: matched[0], Code: {Location: "http://localhost:4566/lambda-code.zip"}});
+    }else {
+      http.json(res, http.StatusNotFound, {__type: "ResourceNotFoundException", Message: `Function not found: ${fName}`});
+    }
+  });
+
+  // Invoke Function: POST /2015-03-31/functions/:name/invocations
+  mux.post("/2015-03-31/functions/:name/invocations", fn(req: Any, res: Any) => {
+    let fName = http.pathValue(req, "name");
+    auditRequest(req, "Lambda", 200);
+    logEvent("LAMBDA", "info", `Invoked function '${fName}'`);
+
+    let responsePayload = {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: `Execution successful from Floci-Aura for ${fName}`,
+        executionTimeMs: 0.85,
+        memoryUsedMb: 24
+      })
+    };
+
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("x-amz-request-id", generateUuid());
+    res.writeHead(http.StatusOK);
+    res.end(JSON.stringify(responsePayload));
+  });
+
+  // Delete Function: DELETE /2015-03-31/functions/:name
+  mux.delete("/2015-03-31/functions/:name", fn(req: Any, res: Any) => {
+    let s = getState();
+    let fName = http.pathValue(req, "name");
+    auditRequest(req, "Lambda", 204);
+    s.lambdaFunctions = s.lambdaFunctions.filter(fn(f: Any): Bool => f.name != fName);
+    logEvent("LAMBDA", "info", `Deleted function '${fName}'`);
+    res.writeHead(http.StatusNoContent);
+    res.end();
+  });
+};

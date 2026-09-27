@@ -1,0 +1,62 @@
+// ==============================================================================
+// FLOCI-AURA: AWS KMS Key Management Service Handler
+// ==============================================================================
+
+import { getState } from "./state";
+import { auditRequest, logEvent, generateUuid, defaultStr } from "./utils";
+
+export fn handleKMS(req: Any, res: Any, target: String, payload: Any): Unit => {
+  let s = getState();
+  auditRequest(req, "KMS", 200);
+
+  if (target.endsWith("CreateKey")) {
+    let kid = generateUuid();
+    let kArn = `arn:aws:kms:us-east-1:000000000000:key/${kid}`;
+    let newKey = {
+      keyId: kid,
+      arn: kArn,
+      description: defaultStr(payload.Description, "Mock KMS Key"),
+      enabled: true,
+      createdAt: "2026-09-18T12:00:00.000Z"
+    };
+    s.kmsKeys.push(newKey);
+    logEvent("KMS", "info", `Created KMS key '${kid}'`);
+    http.json(res, http.StatusOK, {KeyMetadata: newKey});
+    return();
+  }
+
+  if (target.endsWith("ListKeys")) {
+    let list = s.kmsKeys.map(fn(k: Any): Any => {KeyId: k.keyId, KeyArn: k.arn});
+    http.json(res, http.StatusOK, {Keys: list});
+    return();
+  }
+
+  if (target.endsWith("Encrypt")) {
+    let plaintext = defaultStr(payload.Plaintext, "default");
+    let ciphertext = `enc_${plaintext}_floci_mock`;
+    http.json(res, http.StatusOK, {CiphertextBlob: ciphertext, KeyId: payload.KeyId});
+    return();
+  }
+
+  if (target.endsWith("Decrypt")) {
+    let raw = defaultStr(payload.CiphertextBlob, "");
+    let decrypted = raw.replace("enc_", "").replace("_floci_mock", "");
+    http.json(res, http.StatusOK, {Plaintext: decrypted, KeyId: payload.KeyId});
+    return();
+  }
+
+  if (target.endsWith("DescribeKey")) {
+    let kid = defaultStr(payload.KeyId, "");
+    let matched = s.kmsKeys.filter(fn(k: Any): Bool => k.keyId == kid || k.arn == kid);
+    if (matched.length > 0) {
+      http.json(res, http.StatusOK, {KeyMetadata: matched[0]});
+    }else if (s.kmsKeys.length > 0) {
+      http.json(res, http.StatusOK, {KeyMetadata: s.kmsKeys[0]});
+    }else {
+      http.json(res, http.StatusNotFound, {__type: "NotFoundException", message: `Key '${kid}' does not exist`});
+    }
+    return();
+  }
+
+  http.json(res, http.StatusOK, {});
+};
