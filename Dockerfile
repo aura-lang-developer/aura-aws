@@ -8,7 +8,7 @@
 # ------------------------------------------------------------------------------
 # Stage 1: Build aurac compiler from official repository
 # ------------------------------------------------------------------------------
-FROM rust:latest AS builder
+FROM rust:slim-bookworm AS builder
 
 WORKDIR /build
 

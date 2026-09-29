@@ -101,6 +101,9 @@ jobs:
             sleep 1
           done
 
+          docker ps
+          docker logs aura-ci-container
+
           # Run integration tests against Docker container
           bash scripts/test_services.sh 4566
 
