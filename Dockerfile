@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Clone aura-lang repository and build release binary for aurac
 RUN git clone --depth 1 https://github.com/aura-lang-developer/aura-lang.git . && \
     mkdir -p playground && echo '<!DOCTYPE html><html><body><h1>Aura Playground</h1></body></html>' > playground/index.html && \
-    cargo build --release --bin aurac
+    cargo build --release --bin aurac -j 2
 
 # ------------------------------------------------------------------------------
 # Stage 2: Minimal Runtime Environment

@@ -38,6 +38,7 @@ jobs:
           git clone --depth 1 https://github.com/aura-lang-developer/aura-lang.git /tmp/aura-lang
           cd /tmp/aura-lang
           mkdir -p playground && echo '<!DOCTYPE html><html><body><h1>Aura Playground</h1></body></html>' > playground/index.html
+          python3 -c "p='crates/aura-runtime/src/context.rs'; content=open(p).read(); 'options(att_syntax)' in content or open(p,'w').write(content.replace('\"    ret\"\\n);', '\"    ret\",\\n    options(att_syntax)\\n);')" 2>/dev/null || true
           cargo build --release --bin aurac
           sudo cp target/release/aurac /usr/local/bin/aurac
           aurac
