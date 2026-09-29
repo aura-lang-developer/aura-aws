@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: In-Memory Cloud State Store
+// AURA: In-Memory Cloud State Store
 // ==============================================================================
 
 export type CloudStore = {
@@ -31,8 +31,8 @@ let storeInstance: CloudStore = {
     {
       bucket: "default-bucket",
       key: "welcome.txt",
-      content: "Welcome to Floci-Aura! The ultra-fast local AWS emulator written in Aura Lang.",
-      size: 78,
+      content: "Welcome to Aura! The ultra-fast local AWS emulator written in Aura Lang.",
+      size: 72,
       contentType: "text/plain",
       etag: "\"9f8a3c2b1e4d5f6a\"",
       lastModified: "2026-09-18T12:00:00.000Z"
@@ -97,7 +97,7 @@ let storeInstance: CloudStore = {
     {
       name: "prod/db/credentials",
       arn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:prod/db/credentials",
-      value: "{\"username\":\"admin\",\"password\":\"floci_aura_secure_pass_2026\"}",
+      value: "{\"username\":\"admin\",\"password\":\"aura_secure_pass_2026\"}",
       description: "Production Postgres master credentials",
       versionId: "ver-1001",
       createdAt: "2026-09-18T12:00:00.000Z"
@@ -125,7 +125,7 @@ let storeInstance: CloudStore = {
     {
       keyId: "1234abcd-12ab-34cd-56ef-1234567890ab",
       arn: "arn:aws:kms:us-east-1:000000000000:key/1234abcd-12ab-34cd-56ef-1234567890ab",
-      description: "Default Master Key for Floci-Aura",
+      description: "Default Master Key for Aura",
       enabled: true,
       createdAt: "2026-09-18T12:00:00.000Z"
     }
@@ -139,7 +139,7 @@ let storeInstance: CloudStore = {
     }
   ],
   liveLogs: [
-    {timestamp: "12:00:00", level: "info", service: "AURA-CORE", message: "Floci-Aura emulator booted in 1.84ms with zero JVM overhead"},
+    {timestamp: "12:00:00", level: "info", service: "AURA-CORE", message: "Aura emulator booted in 1.84ms with zero JVM overhead"},
     {timestamp: "12:00:01", level: "success", service: "SERVICEMUX", message: "Listening on http://localhost:4566 (AWS wire protocol dispatcher)"}
   ],
   eventBuses: [

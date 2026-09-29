@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Amazon SQS (Simple Queue Service) Handler
+// AURA: Amazon SQS (Simple Queue Service) Handler
 // ==============================================================================
 
 import { getState } from "./state";

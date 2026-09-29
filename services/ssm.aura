@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS SSM Parameter Store Service Handler
+// AURA: AWS SSM Parameter Store Service Handler
 // ==============================================================================
 
 import { getState } from "./state";

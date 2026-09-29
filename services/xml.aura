@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: XML Response Helpers & Protocol Serializers
+// AURA: XML Response Helpers & Protocol Serializers
 // ==============================================================================
 
 import { getState } from "./state";
@@ -16,7 +16,7 @@ export fn renderS3ListBuckets(): String => {
     let item = xmlWrap("Name", b.name) + xmlWrap("CreationDate", b.createdAt);
     bucketsXml = bucketsXml + xmlWrap("Bucket", item);
   }
-  let owner = xmlWrap("ID", "000000000000") + xmlWrap("DisplayName", "floci-aura");
+  let owner = xmlWrap("ID", "000000000000") + xmlWrap("DisplayName", "aura");
   let body = xmlWrap("Owner", owner) + xmlWrap("Buckets", bucketsXml);
   `<?xml version="1.0" encoding="UTF-8"?>\n<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">\n${body}\n</ListAllMyBucketsResult>`
 };

@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS EventBridge Service Handler
+// AURA: AWS EventBridge Service Handler
 // ==============================================================================
 
 import { getState } from "./state";

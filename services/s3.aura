@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Amazon S3 Storage Service REST API
+// AURA: Amazon S3 Storage Service REST API
 // ==============================================================================
 
 import { getState } from "./state";
@@ -17,7 +17,7 @@ export fn registerS3Routes(mux: Any): Unit => {
 
     // If user visits http://localhost:4566/ directly in a browser, redirect to Web Console!
     if (accept.includes("text/html")) {
-      http.redirect(res, "/_floci/ui", 302);
+      http.redirect(res, "/_aura/ui", 302);
       return();
     }
 
@@ -31,7 +31,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   mux.put("/:bucket", fn(req: Any, res: Any) => {
     let s = getState();
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     auditRequest(req, "S3", 200);
@@ -55,7 +55,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   mux.delete("/:bucket", fn(req: Any, res: Any) => {
     let s = getState();
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     auditRequest(req, "S3", 204);
@@ -71,7 +71,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   // S3 List Objects inside Bucket: GET /:bucket
   mux.get("/:bucket", fn(req: Any, res: Any) => {
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     let prefix = http.query(req, "prefix");
@@ -86,7 +86,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   mux.post("/:bucket/:key", fn(req: Any, res: Any) => {
     let s = getState();
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     let key = http.pathValue(req, "key");
@@ -133,7 +133,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   mux.put("/:bucket/:key", fn(req: Any, res: Any) => {
     let s = getState();
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     let key = http.pathValue(req, "key");
@@ -171,7 +171,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   mux.get("/:bucket/:key", fn(req: Any, res: Any) => {
     let s = getState();
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     let key = http.pathValue(req, "key");
@@ -197,7 +197,7 @@ export fn registerS3Routes(mux: Any): Unit => {
   mux.delete("/:bucket/:key", fn(req: Any, res: Any) => {
     let s = getState();
     let bName = http.pathValue(req, "bucket");
-    if (bName == "2015-03-31" || bName.startsWith("_floci") || bName == "site" || bName == "ui") {
+    if (bName == "2015-03-31" || bName.startsWith("_aura") || bName == "site" || bName == "ui") {
       return();
     }
     let key = http.pathValue(req, "key");

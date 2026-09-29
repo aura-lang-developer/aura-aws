@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS STS (Security Token Service) Handler
+// AURA: AWS STS (Security Token Service) Handler
 // ==============================================================================
 
 import { auditRequest, getFormValue } from "./utils";

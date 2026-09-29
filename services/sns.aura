@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Amazon SNS (Simple Notification Service) & Fanout Handler
+// AURA: Amazon SNS (Simple Notification Service) & Fanout Handler
 // ==============================================================================
 
 import { getState } from "./state";

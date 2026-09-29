@@ -1,0 +1,108 @@
+name: CI Test & Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-services:
+    name: Test Services & Runtime
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout aura-aws
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: aurac-compiler-cache
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Aura Compiler (aurac)
+        run: |
+          echo "Cloning aura-lang compiler..."
+          git clone --depth 1 https://github.com/aura-lang-developer/aura-lang.git /tmp/aura-lang
+          cd /tmp/aura-lang
+          mkdir -p playground && echo '<!DOCTYPE html><html><body><h1>Aura Playground</h1></body></html>' > playground/index.html
+          cargo build --release --bin aurac
+          sudo cp target/release/aurac /usr/local/bin/aurac
+          aurac
+
+      - name: Verify server.aura type check
+        run: |
+          aurac check server.aura
+
+      - name: Run Integration Tests (52 endpoints)
+        run: |
+          echo "Starting Aura server in background..."
+          AURA_PORT=4566 aurac run server.aura &
+          SERVER_PID=$!
+
+          echo "Waiting for server to become healthy..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4566/_aura/health | grep -q '"status":"healthy"'; then
+              echo "Server is ready on port 4566!"
+              break
+            fi
+            sleep 1
+          done
+
+          # Execute full test suite
+          bash scripts/test_services.sh 4566
+
+          # Terminate server
+          kill $SERVER_PID || true
+
+  docker-test:
+    name: Docker Build & Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: aura-aws:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Container Health and Endpoints
+        run: |
+          docker run -d --name aura-ci-container -p 4566:4566 aura-aws:ci-test
+
+          echo "Waiting for container healthcheck..."
+          for i in {1..40}; do
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' aura-ci-container 2>/dev/null || echo "starting")
+            if [ "$STATUS" == '"healthy"' ]; then
+              echo "Container is healthy!"
+              break
+            fi
+            sleep 1
+          done
+
+          # Run integration tests against Docker container
+          bash scripts/test_services.sh 4566
+
+          # Teardown
+          docker stop aura-ci-container
+          docker rm aura-ci-container

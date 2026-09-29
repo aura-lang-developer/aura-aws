@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS CloudWatch Logs Service Handler
+// AURA: AWS CloudWatch Logs Service Handler
 // ==============================================================================
 
 import { getState } from "./state";

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Floci-Aura · Ultra-Fast Local Cloud Emulator in Aura Lang</title>
+  <title>Aura · Ultra-Fast Local Cloud Emulator in Aura Lang</title>
   <meta name="description" content="Next-generation local AWS cloud emulator rewritten in Aura Lang. Sub-millisecond cold start, zero JVM, native binary, and drop-in compatibility with AWS CLI, SDKs, and Terraform.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
   <link rel="stylesheet" href="/site/style.css">
@@ -25,7 +25,7 @@
           <span class="logo-emoji">☁️</span>
           <span class="aura-tag">AURA</span>
         </div>
-        <span class="brand-name">Floci<span class="accent-text">-Aura</span></span>
+        <span class="brand-name">Aura</span>
       </a>
 
       <nav class="nav-links">
@@ -38,8 +38,8 @@
       </nav>
 
       <div class="header-cta">
-        <a href="/_floci/ui" target="_blank" class="btn-outline-glow">Open Console ↗</a>
-        <a href="https://github.com/floci-io/floci" target="_blank" class="btn-primary-gradient">
+        <a href="/_aura/ui" target="_blank" class="btn-outline-glow">Open Console ↗</a>
+        <a href="https://github.com/mrojasb2000/aura-lang" target="_blank" class="btn-primary-gradient">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
           GitHub
         </a>
@@ -69,8 +69,8 @@
         <a href="#playground" class="btn-hero-primary">
           <span>⚡ Try Live Interactive CLI</span>
         </a>
-        <a href="/_floci/ui" target="_blank" class="btn-hero-secondary">
-          <span>Explore Web Console (/_floci/ui)</span>
+        <a href="/_aura/ui" target="_blank" class="btn-hero-secondary">
+          <span>Explore Web Console (/_aura/ui)</span>
         </a>
       </div>
 
@@ -130,14 +130,14 @@
               <span class="mac-btn minimize"></span>
               <span class="mac-btn zoom"></span>
             </div>
-            <div class="terminal-title">floci-aura @ localhost:4566 (zsh)</div>
+            <div class="terminal-title">aura @ localhost:4566 (zsh)</div>
             <div class="terminal-status">
               <span class="status-indicator"></span> 0.2ms latency
             </div>
           </div>
 
           <div class="terminal-body" id="terminalOutput">
-            <div class="t-line dim"># Floci-Aura Local Cloud Runtime v0.2.0 (Aura Lang Native)</div>
+            <div class="t-line dim"># Aura Local Cloud Runtime v0.2.0 (Aura Lang Native)</div>
             <div class="t-line dim"># Listening on http://localhost:4566 · Region: us-east-1</div>
             <div class="t-line"><br></div>
             <div class="t-line prompt-line">
@@ -162,7 +162,7 @@
     <div class="section-container">
       <div class="section-header-center">
         <span class="section-tag">EMPIRICAL BENCHMARKS</span>
-        <h2>Why Engineers are Switching to Floci-Aura</h2>
+        <h2>Why Engineers are Switching to Aura</h2>
         <p>Benchmarked on Apple M-Series Silicon (Mach-O Native) & Linux x86_64 (ELF Native)</p>
       </div>
 
@@ -172,11 +172,11 @@
             <tr>
               <th>Performance Metric</th>
               <th class="highlight-col">
-                <div class="col-badge aura">FLOCI-AURA</div>
+                <div class="col-badge aura">AURA</div>
                 <span>Aura Lang Native</span>
               </th>
               <th>
-                <div class="col-badge java">FLOCI (Java)</div>
+                <div class="col-badge java">Java / Quarkus</div>
                 <span>Quarkus + GraalVM</span>
               </th>
               <th>
@@ -260,7 +260,7 @@
     <div class="section-container">
       <div class="section-header-center">
         <span class="section-tag">ENGINEERING ARCHITECTURE</span>
-        <h2>How Floci-Aura Dispatches Cloud Services</h2>
+        <h2>How Aura Dispatches Cloud Services</h2>
         <p>Built upon the Aura Language M:N fiber scheduler with non-blocking I/O and zero GC pauses</p>
       </div>
 
@@ -314,7 +314,7 @@
           <div class="arch-box store-box">
             <div class="arch-icon">🗄️</div>
             <h4>Storage & Console</h4>
-            <p>Lock-free state store + Real-time Web Console (/_floci/ui)</p>
+            <p>Lock-free state store + Real-time Web Console (/_aura/ui)</p>
             <span class="arch-badge emerald">Zero Latency</span>
           </div>
         </div>
@@ -433,8 +433,8 @@
 
         <div class="service-card-item highlight-card">
           <div class="s-icon">🖥️</div>
-          <h3>Web Console (/_floci/ui)</h3>
-          <p>Real-time visual browser dashboard built into Floci-Aura. Inspect, create, and debug resources visually.</p>
+          <h3>Web Console (/_aura/ui)</h3>
+          <p>Real-time visual browser dashboard built into Aura. Inspect, create, and debug resources visually.</p>
           <div class="s-ops">
             <code>Resource Explorer</code> <code>Live Audit Log</code> <code>Interactive Modals</code>
           </div>
@@ -463,7 +463,7 @@
         </div>
 
         <div class="code-content-wrapper">
-          <pre><code id="showcaseCode"># 1. Point your shell to Floci-Aura
+          <pre><code id="showcaseCode"># 1. Point your shell to Aura
 export AWS_ENDPOINT_URL=http://localhost:4566
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
@@ -489,7 +489,7 @@ aws sqs create-queue --queue-name order-events</code></pre>
     <div class="section-container">
       <div class="section-header-center">
         <span class="section-tag">UNDER THE HOOD</span>
-        <h2>Why We Re-Engineered Floci in Aura Lang</h2>
+        <h2>Why We Built Aura Cloud Emulator in Aura Lang</h2>
         <p>Combining the ergonomic ease of TypeScript with native compiled speed and ML-grade type safety</p>
       </div>
 
@@ -515,7 +515,7 @@ aws sqs create-queue --queue-name order-events</code></pre>
         <div class="reason-card">
           <div class="r-num">04</div>
           <h4>850k+ LOC/s Compiler</h4>
-          <p>Cold-start times drop from 3.3 seconds in LocalStack down to <strong>1.8 milliseconds</strong> in Floci-Aura, ideal for instant CI pipelines.</p>
+          <p>Cold-start times drop from 3.3 seconds in LocalStack down to <strong>1.8 milliseconds</strong> in Aura, ideal for instant CI pipelines.</p>
         </div>
       </div>
     </div>
@@ -532,13 +532,13 @@ aws sqs create-queue --queue-name order-events</code></pre>
           <div class="cmd-box">
             <span class="cmd-comment"># Clone and run with Aura Lang</span>
             <code>git clone https://github.com/mrojasb2000/aura-lang.git</code>
-            <code>cd aura-lang/floci-aura && aurac run server.aura</code>
+            <code>cd aura-aws && aurac run server.aura</code>
           </div>
         </div>
 
         <div class="cta-links">
-          <a href="/_floci/ui" target="_blank" class="btn-hero-primary">Launch Web Console Now →</a>
-          <a href="https://github.com/floci-io/floci" target="_blank" class="btn-hero-secondary">View Floci GitHub</a>
+          <a href="/_aura/ui" target="_blank" class="btn-hero-primary">Launch Web Console Now →</a>
+          <a href="https://github.com/mrojasb2000/aura-lang" target="_blank" class="btn-hero-secondary">View Aura Lang GitHub</a>
         </div>
       </div>
     </div>
@@ -550,7 +550,7 @@ aws sqs create-queue --queue-name order-events</code></pre>
       <div class="footer-col">
         <div class="brand-link">
           <span class="logo-emoji">☁️</span>
-          <span class="brand-name">Floci<span class="accent-text">-Aura</span></span>
+          <span class="brand-name">Aura</span>
         </div>
         <p class="footer-desc">
           Ultra-fast, native, MIT-licensed local AWS cloud emulator powered by Aura Lang.
@@ -558,11 +558,10 @@ aws sqs create-queue --queue-name order-events</code></pre>
       </div>
 
       <div class="footer-col">
-        <h5>Cloud Emulators</h5>
-        <a href="https://github.com/floci-io/floci">floci (AWS)</a>
-        <a href="https://github.com/floci-io/floci-az">floci-az (Azure)</a>
-        <a href="https://github.com/floci-io/floci-gcp">floci-gcp (GCP)</a>
-        <a href="https://github.com/floci-io/floci-oci">floci-oci (OCI)</a>
+        <h5>Ecosystem</h5>
+        <a href="https://github.com/mrojasb2000/aura-lang">Aura Lang</a>
+        <a href="#">Aura AWS Emulator</a>
+        <a href="#">Aura Extensions</a>
       </div>
 
       <div class="footer-col">
@@ -580,7 +579,7 @@ aws sqs create-queue --queue-name order-events</code></pre>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2026 Floci-Aura Contributors. Built with ❤️ for the global cloud engineering community.</p>
+      <p>© 2026 Aura Contributors. Built with ❤️ for the global cloud engineering community.</p>
     </div>
   </footer>
 

@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Utility Functions & Request Auditing
+// AURA: Utility Functions & Request Auditing
 // ==============================================================================
 
 import { getState } from "./state";
@@ -32,7 +32,7 @@ export fn generateUuid(): String => {
   let s = getState();
   s.nextIdCounter = s.nextIdCounter + 1;
   let t = time.now();
-  `floci-${t}-${s.nextIdCounter}`
+  `aura-${t}-${s.nextIdCounter}`
 };
 
 export fn safeParseJson(raw: String): Any => {

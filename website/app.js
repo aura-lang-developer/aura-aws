@@ -1,4 +1,4 @@
-// Floci-Aura Promotional Website Controller
+// Aura Promotional Website Controller
 
 const terminalPresets = {
   s3_create: {
@@ -39,7 +39,7 @@ const terminalPresets = {
   secrets_get: {
     cmd: "aws secretsmanager get-secret-value --secret-id prod/db/creds --endpoint-url=http://localhost:4566",
     output: [
-      { text: "{\n  \"ARN\": \"arn:aws:secretsmanager:us-east-1:000000000000:secret:prod/db/creds\",\n  \"Name\": \"prod/db/creds\",\n  \"SecretString\": \"{\\\"username\\\":\\\"admin\\\",\\\"password\\\":\\\"floci-secret-pwd\\\"}\"\n}", class: "success" },
+      { text: "{\n  \"ARN\": \"arn:aws:secretsmanager:us-east-1:000000000000:secret:prod/db/creds\",\n  \"Name\": \"prod/db/creds\",\n  \"SecretString\": \"{\\\"username\\\":\\\"admin\\\",\\\"password\\\":\\\"aura-secret-pwd\\\"}\"\n}", class: "success" },
       { text: "HTTP 200 OK (0.22 ms) · AES-256 Symmetric Mock Decrypted", class: "dim" }
     ]
   }
@@ -100,7 +100,7 @@ async function executeManualCommand() {
   // Command Parser
   if (lower === 'clear') {
     terminalOutput.innerHTML = `
-      <div class="t-line dim"># Floci-Aura Local Cloud Runtime v0.2.0 (Aura Lang Native)</div>
+      <div class="t-line dim"># Aura Local Cloud Runtime v0.2.0 (Aura Lang Native)</div>
       <div class="t-line dim"># Listening on http://localhost:4566 · Region: us-east-1</div>
       <div class="t-line"><br></div>
     `;
@@ -109,7 +109,7 @@ async function executeManualCommand() {
   }
 
   if (lower === 'help') {
-    addOutputLine("Available AWS CLI commands supported by Floci-Aura local emulator:", "success");
+    addOutputLine("Available AWS CLI commands supported by Aura local emulator:", "success");
     addOutputLine("  aws s3 mb s3://<bucket>                      Create an S3 bucket", "dim");
     addOutputLine("  aws s3 ls                                    List all S3 buckets", "dim");
     addOutputLine("  aws s3 ls s3://<bucket>                      List objects in a bucket", "dim");
@@ -137,7 +137,7 @@ async function executeManualCommand() {
   const startTime = performance.now();
   let executedOnline = false;
 
-  // Real fetch dispatch to local Floci-Aura emulator
+  // Real fetch dispatch to local Aura emulator
   try {
     if (val.includes('s3') && val.includes('mb')) {
       const match = val.match(/s3:\/\/([a-zA-Z0-9.\-_]+)/);
@@ -286,7 +286,7 @@ async function executeManualCommand() {
       addOutputLine("{\n  \"UserId\": \"AKIAIOSFODNN7EXAMPLE\",\n  \"Account\": \"000000000000\",\n  \"Arn\": \"arn:aws:iam::000000000000:root\"\n}", "success");
       addOutputLine("HTTP 200 OK (0.10 ms)", "dim");
     } else {
-      addOutputLine(`[Floci-Aura Native Engine] Dispatched: ${val}`, "success");
+      addOutputLine(`[Aura Native Engine] Dispatched: ${val}`, "success");
       addOutputLine("HTTP 200 OK (0.22 ms) · Executed in local Aura runtime", "dim");
     }
   }
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Code Showcase Switcher
 const showcaseSnippets = {
-  cli: `# 1. Point your shell to Floci-Aura
+  cli: `# 1. Point your shell to Aura
 export AWS_ENDPOINT_URL=http://localhost:4566
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
@@ -390,7 +390,7 @@ resource "aws_s3_bucket" "b" {
   node: `import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
-// Configured to point directly at Floci-Aura
+// Configured to point directly at Aura
 const s3 = new S3Client({
   endpoint: "http://localhost:4566",
   region: "us-east-1",
@@ -408,7 +408,7 @@ console.log("Uploaded seamlessly to local Aura S3!");`,
 
   python: `import boto3
 
-# Connect to Floci-Aura local emulator
+# Connect to Aura local emulator
 s3 = boto3.client(
     's3',
     endpoint_url='http://localhost:4566',
@@ -461,17 +461,17 @@ func main() {
     fmt.Println("Local Buckets:", result.Buckets)
 }`,
 
-  aura: `// Using Floci-Aura with native Aura Lang HTTP Client
+  aura: `// Using Aura with native Aura Lang HTTP Client
 import { http } from "net/http";
 
 export fn main(): Unit => {
-    let flociEndpoint = "http://localhost:4566";
+    let auraEndpoint = "http://localhost:4566";
     
-    // Check Health of Floci-Aura
-    println("Checking Floci-Aura health on :4566...");
+    // Check Health of Aura
+    println("Checking Aura health on :4566...");
     
     // Create bucket via REST
-    let createRes = http.put(\`\${flociEndpoint}/app-storage\`, {});
+    let createRes = http.put(\`\${auraEndpoint}/app-storage\`, {});
     println("Created local S3 bucket in < 1ms!");
 }`
 };

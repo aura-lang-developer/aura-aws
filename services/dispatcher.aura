@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS Wire Protocol Root POST Dispatcher
+// AURA: AWS Wire Protocol Root POST Dispatcher
 // ==============================================================================
 
 import { auditRequest, safeParseJson, getFormValue } from "./utils";
@@ -105,6 +105,6 @@ export fn registerDispatcherRoute(mux: Any): Unit => {
 
     // Fallback for root POST
     auditRequest(req, "UNKNOWN-AWS", 200);
-    http.json(res, http.StatusOK, {message: "Floci-Aura wire request received", target: target, action: action});
+    http.json(res, http.StatusOK, {message: "Aura wire request received", target: target, action: action});
   });
 };

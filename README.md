@@ -1,6 +1,6 @@
-# ⚡ Floci-Aura · Local Cloud Emulator
+# ⚡ Aura · Local Cloud Emulator
 
-[![Aura Lang](https://img.shields.io/badge/Language-Aura_Lang_Native-cyan.svg)](https://github.com/mrojasb2000/aura-lang)
+[![Aura Lang](https://img.shields.io/badge/Language-Aura_Lang_Native-cyan.svg)](https://github.com/aura-lang-developer/aura-lang)
 [![Cold Start](https://img.shields.io/badge/Cold--Start-1.8_ms-brightgreen.svg)](#-rendimiento-empírico-y-benchmarks)
 [![Idle Memory](https://img.shields.io/badge/Idle_Memory-8.4_MB-blue.svg)](#-rendimiento-empírico-y-benchmarks)
 [![Drop-in LocalStack](https://img.shields.io/badge/Compatibility-AWS_CLI_%26_Terraform-orange.svg)](#-configuración-con-herramientas-aws-y-sdks)
@@ -8,7 +8,7 @@
 [![Tests Passing](https://img.shields.io/badge/Test_Suite-32%2F32_Passing-success.svg)](#-suite-de-pruebas-y-verificación)
 
 > **Any Cloud. Locally. Native Speed. Zero Gates.**<br>
-> Una reimplementación de alto rendimiento del emulador de nube local [floci-io/floci](https://github.com/floci-io/floci), escrita completamente en **Aura Lang** (`aurac`).
+> Una implementación de alto rendimiento de emulador de nube local, escrita completamente en **Aura Lang** (`aurac`).
 >
 > Proporciona servicios emulados de AWS en tu máquina local sin cuenta de nube, sin tokens de autenticación, sin telemetría y sin muros de pago. Conecta tu **AWS CLI**, **Terraform**, **SDKs** (Node, Python, Go, Aura) o suite de pruebas a `http://localhost:4566` y mantén tus flujos de trabajo sin cambios.
 
@@ -16,11 +16,11 @@
 
 ## 📑 Tabla de Contenidos
 
-1. [🌟 ¿Qué es Floci-Aura?](#-qué-es-floci-aura)
+1. [🌟 ¿Qué es Aura?](#-qué-es-aura)
 2. [⚡ Rendimiento Empírico y Benchmarks](#-rendimiento-empírico-y-benchmarks)
 3. [🏛️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
 4. [🚀 Inicio Rápido en 10 Segundos](#-inicio-rápido-en-10-segundos)
-5. [🖥️ Consola Web Integrada (`/_floci/ui`)](#️-consola-web-integrada-_flociui)
+5. [🖥️ Consola Web Integrada (`/_aura/ui`)](#️-consola-web-integrada-_auraui)
 6. [🌐 Sitio Web Promocional (`/site`)](#-sitio-web-promocional-site)
 7. [🛠️ Configuración con Herramientas AWS y SDKs](#️-configuración-con-herramientas-aws-y-sdks)
    - [AWS CLI](#1-aws-cli)
@@ -37,11 +37,11 @@
 
 ---
 
-## 🌟 ¿Qué es Floci-Aura?
+## 🌟 ¿Qué es Aura?
 
-**Floci-Aura** es el emulador de servicios AWS local más rápido, ligero y autónomo disponible para desarrolladores e ingenieros de software. 
+**Aura** es el emulador de servicios AWS local más rápido, ligero y autónomo disponible para desarrolladores e ingenieros de software. 
 
-A diferencia de las soluciones basadas en pesados contenedores Docker de Python (como LocalStack) o emuladores basados en Java/Quarkus, **Floci-Aura** está construido sobre el modelo de ejecución nativo de **Aura Lang**:
+A diferencia de las soluciones basadas en pesados contenedores Docker de Python (como LocalStack) o emuladores basados en Java/Quarkus, **Aura** está construido sobre el modelo de ejecución nativo de **Aura Lang**:
 
 - **Arranque en frío en 1.8 milisegundos**: Listo de inmediato en pipelines de CI/CD efímeros.
 - **Consumo de memoria en reposo de ~8.4 MB**: Menos del 6% del consumo de LocalStack (143 MB).
@@ -55,7 +55,7 @@ A diferencia de las soluciones basadas en pesados contenedores Docker de Python 
 
 Comparativa empírica realizada en Apple Silicon (macOS Sonoma / Mach-O Native) y Linux x86_64 (ELF Native):
 
-| Métrica de Rendimiento | Floci-Aura (Aura Lang) | Floci (Java / Quarkus) | LocalStack Community (Python) |
+| Métrica de Rendimiento | Aura (Aura Lang) | Java / Quarkus | LocalStack Community (Python) |
 |---|:---:|:---:|:---:|
 | **Tiempo de Arranque (Cold-Start)** | **1.8 ms** ⚡ | 24.0 ms | 3,300.0 ms (3.3s) |
 | **Memoria en Reposo (Idle RAM)** | **8.4 MB** 🍃 | 13.2 MB | 143.0 MB |
@@ -74,7 +74,7 @@ Comparativa empírica realizada en Apple Silicon (macOS Sonoma / Mach-O Native) 
 flowchart TD
     Client["AWS Clients\n(AWS CLI · Boto3 · SDK v3 · Terraform)"]
 
-    subgraph FlociAura ["Floci-Aura Engine (Port 4566)"]
+    subgraph AuraEngine ["Aura Engine (Port 4566)"]
         ServeMux["Aura ServeMux HTTP Engine\nM:N Fiber Concurrency Pipeline"]
         
         Classifier{"AWS Protocol\nClassifier"}
@@ -103,7 +103,7 @@ flowchart TD
             Logs["CloudWatch Logs\nStructured Streams"]
         end
 
-        Console["Web Console SPA\n(/_floci/ui & /site)"]
+        Console["Web Console SPA\n(/_aura/ui & /site)"]
         Store[("In-Memory State Store\nLock-Free CSP Channels")]
     end
 
@@ -119,38 +119,69 @@ flowchart TD
 
 ---
 
-## 🚀 Inicio Rápido en 10 Segundos
+## 🚀 Inicio Rápido
 
-### Opción 1: Ejecutar directamente con `aurac`
+### Opción 1: Ejecutar con Docker (Recomendado)
 
-Asegúrate de contar con el compilador `aurac` en tu sistema:
+Aura se distribuye como una imagen multi-arquitectura (`linux/amd64` y `linux/arm64`) en GitHub Container Registry:
+
+```bash
+# Descargar y ejecutar la imagen oficial
+docker run -d --name aura -p 4566:4566 ghcr.io/aura-lang-developer/aura-aws:latest
+
+# Ver logs del contenedor
+docker logs -f aura
+```
+
+O si usas Docker Compose:
+
+```yaml
+services:
+  aura:
+    image: ghcr.io/aura-lang-developer/aura-aws:latest
+    container_name: aura
+    ports:
+      - "4566:4566"
+    environment:
+      - AURA_PORT=4566
+```
+
+### Opción 2: Paquete Binario Autónomo (GitHub Releases)
+
+Descarga el release pre-empaquetado para tu sistema operativo desde [GitHub Releases](https://github.com/aura-lang-developer/aura-aws/releases):
+
+```bash
+# macOS / Linux
+tar -xzf aura-aws-v1.0.0-<platform>.tar.gz
+cd aura-aws-v1.0.0-<platform>
+./bin/aura-aws
+
+# Windows
+Expand-Archive aura-aws-v1.0.0-windows-x64.zip
+cd aura-aws-v1.0.0-windows-x64
+.\bin\aura-aws.cmd
+```
+
+### Opción 3: Ejecutar desde el Código Fuente con `aurac`
+
+Si tienes instalado el compilador `aurac` de [Aura Lang](https://github.com/aura-lang-developer/aura-lang):
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/mrojasb2000/aura-lang.git
-cd aura-lang/floci-aura
+git clone https://github.com/aura-lang-developer/aura-aws.git
+cd aura-aws
 
 # 2. Iniciar el emulador local en el puerto estándar 4566
 aurac run server.aura
-```
-
-### Opción 2: Compilar a Binario Nativo Autónomo
-
-```bash
-# Compilar directamente a binario ejecutable sin dependencias
-aurac build server.aura -o floci-aura-bin
-
-# Ejecutar el binario
-./floci-aura-bin
-```
-
-### Opción 3: Usar el script de lanzamiento
-
-```bash
+# O mediante el launcher script:
 ./scripts/run.sh 4566
 ```
 
-Una vez en ejecución, exporta las variables de entorno de AWS en tu terminal:
+---
+
+### 🔧 Conectar tus herramientas AWS
+
+Una vez en ejecución, exporta las variables de entorno estándar en tu terminal:
 
 ```bash
 export AWS_ENDPOINT_URL=http://localhost:4566
@@ -159,15 +190,15 @@ export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 ```
 
-¡Listo! Cualquier comando del AWS CLI o SDK interactuará directamente con Floci-Aura.
+¡Listo! Cualquier comando del AWS CLI o SDK interactuará directamente con Aura.
 
 ---
 
-## 🖥️ Consola Web Integrada (`/_floci/ui`)
+## 🖥️ Consola Web Integrada (`/_aura/ui`)
 
-Floci-Aura incluye una moderna **Consola Web en tiempo real** servida directamente en:
+Aura incluye una moderna **Consola Web en tiempo real** servida directamente en:
 
-👉 **`http://localhost:4566/_floci/ui`** (o simplemente abriendo `http://localhost:4566` en tu navegador).
+👉 **`http://localhost:4566/_aura/ui`** (o simplemente abriendo `http://localhost:4566` en tu navegador).
 
 ### Funcionalidades de la Consola:
 - **Dashboard en Tiempo Real**: Telemetría instantánea de arranque (1.8 ms), solicitudes por segundo, latencia promedio y uso de memoria.
@@ -184,14 +215,14 @@ Floci-Aura incluye una moderna **Consola Web en tiempo real** servida directamen
 
 ## 🌐 Sitio Web Promocional (`/site`)
 
-Floci-Aura incluye un sitio web promocional de clase mundial, diseñado con estética cyberpunk oscura, glassmorphism, gradientes neón y tipografía fluida:
+Aura incluye un sitio web promocional de clase mundial, diseñado con estética cyberpunk oscura, glassmorphism, gradientes neón y tipografía fluida:
 
-👉 **`http://localhost:4566/site`** (o abrir `floci-aura/website/index.html`).
+👉 **`http://localhost:4566/site`** (o abrir `website/index.html`).
 
 ### Características del Sitio Web:
 1. **Hero interactivo** con métricas clave en vivo.
 2. **Terminal CLI interactiva (Playground)**: Permite a los usuarios ejecutar comandos simulados del AWS CLI (`aws s3 mb`, `aws dynamodb create-table`, `aws sqs send-message`, etc.) directamente en el navegador con respuestas reales coloreadas.
-3. **Comparador interactivo de Benchmarks**: Gráficas y tablas interactivas contra Floci Java y LocalStack.
+3. **Comparador interactivo de Benchmarks**: Gráficas y tablas interactivas contra Java/Quarkus y LocalStack.
 4. **Selector de integración Multi-SDK**: Ejemplos de código para Terraform, AWS CLI, TypeScript, Python, Go y Aura Lang con botón de copiado.
 5. **Profundización técnica ("Why Aura Lang?")** explicando la compilación Cranelift, la concurrencia CSP y la ausencia de dependencias externas.
 
@@ -233,7 +264,7 @@ aws sts get-caller-identity
 
 ### 2. HashiCorp Terraform / OpenTofu
 
-Configura el proveedor de AWS para apuntar a Floci-Aura:
+Configura el proveedor de AWS para apuntar a Aura:
 
 ```hcl
 terraform {
@@ -296,7 +327,7 @@ await s3.send(new PutObjectCommand({
 
 // Listar objetos
 const { Contents } = await s3.send(new ListObjectsV2Command({ Bucket: "mi-bucket-local" }));
-console.log("Objetos en Floci-Aura:", Contents);
+console.log("Objetos en Aura:", Contents);
 ```
 
 ### 4. Python (Boto3)
@@ -304,7 +335,7 @@ console.log("Objetos en Floci-Aura:", Contents);
 ```python
 import boto3
 
-# Conectar al emulador Floci-Aura
+# Conectar al emulador Aura
 s3 = boto3.client(
     's3',
     endpoint_url='http://localhost:4566',
@@ -357,7 +388,7 @@ func main() {
     })
 
     result, _ := client.ListBuckets(context.TODO(), &s3.ListBucketsInput{})
-    fmt.Println("Buckets en Floci-Aura:", result.Buckets)
+    fmt.Println("Buckets en Aura:", result.Buckets)
 }
 ```
 
@@ -367,14 +398,14 @@ func main() {
 import { http } from "net/http";
 
 export fn main(): Unit => {
-    let floci = "http://localhost:4566";
+    let aura = "http://localhost:4566";
 
-    // Verificar salud de Floci-Aura
-    let health = http.get(`${floci}/_floci/health`);
-    println(`Floci-Aura Health: ${health.status}`);
+    // Verificar salud de Aura
+    let health = http.get(`${aura}/_aura/health`);
+    println(`Aura Health: ${health.status}`);
 
     // Crear Bucket en S3
-    let createBucket = http.put(`${floci}/aura-storage`, {});
+    let createBucket = http.put(`${aura}/aura-storage`, {});
     println("Bucket s3://aura-storage creado en < 1ms");
 };
 ```
@@ -417,23 +448,23 @@ La decisión de implementar este emulador en **Aura Lang** obedece a razones fun
 
 ## 🧪 Suite de Pruebas y Verificación
 
-Floci-Aura incluye una suite de pruebas de integración completa que evalúa los 12 servicios emulados contra comandos reales `cURL` y `AWS CLI`.
+Aura incluye una suite de pruebas de integración completa que evalúa los 12 servicios emulados contra comandos reales `cURL` y `AWS CLI`.
 
 Para ejecutar las pruebas:
 
 ```bash
 # Iniciar el servidor
-FLOCI_PORT=4566 aurac run floci-aura/server.aura &
+AURA_PORT=4566 aurac run server.aura &
 
 # Ejecutar el runner de pruebas automatizado
-./floci-aura/scripts/test_services.sh 4566
+./scripts/test_services.sh 4566
 ```
 
 ### Resultados de Verificación:
 
 ```
 ==================================================================
-🧪 RUNNING FLOCI-AURA INTEGRATION TEST SUITE
+🧪 RUNNING AURA INTEGRATION TEST SUITE
 Target Endpoint: http://localhost:4566
 ==================================================================
 
@@ -492,7 +523,7 @@ Target Endpoint: http://localhost:4566
 ==================================================================
 SUMMARY: Passed: 32 | Failed: 0
 ==================================================================
-🎉 ALL 32 TESTS PASSED FLAWLESSLY ON FLOCI-AURA!
+🎉 ALL 32 TESTS PASSED FLAWLESSLY ON AURA!
 ```
 
 ---
@@ -500,7 +531,7 @@ SUMMARY: Passed: 32 | Failed: 0
 ## 📂 Estructura del Proyecto
 
 ```
-floci-aura/
+aura-aws/
 ├── README.md                      # Documentación maestra y guía de referencia
 ├── server.aura                    # Punto de entrada (Composition Root) y montaje del router HTTP
 ├── Dockerfile                     # Especificación de contenedor Docker multi-stage
@@ -524,7 +555,7 @@ floci-aura/
 │   ├── ssm.aura                   # Servicio AWS SSM Parameter Store
 │   ├── logs.aura                  # Servicio AWS CloudWatch Logs
 │   └── eventbridge.aura           # Servicio AWS EventBridge (Buses y eventos)
-├── ui/                            # Consola Web embebida (/_floci/ui)
+├── ui/                            # Consola Web embebida (/_aura/ui)
 │   ├── index.html                 # Interfaz visual SPA de la consola
 │   ├── style.css                  # Estilos glassmorphic y tema oscuro
 │   └── app.js                     # Controlador interactivo y sincronización de recursos
@@ -545,4 +576,4 @@ floci-aura/
 
 Este proyecto está licenciado bajo la **Licencia MIT**. Siéntete libre de usarlo, modificarlo y distribuirlo para proyectos personales, educativos y empresariales.
 
-Reconocimiento especial a la comunidad y equipo de **[Floci](https://github.com/floci-io/floci)** por el estándar abierto de emuladores de nube locales, y al equipo de **[Aura Lang](https://github.com/mrojasb2000/aura-lang)** por el compilador y runtime nativo de nueva generación.
+Reconocimiento especial a la comunidad de código abierto por el estándar de emuladores de nube locales, y al equipo de **[Aura Lang](https://github.com/mrojasb2000/aura-lang)** por el compilador y runtime nativo de nueva generación.

@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Amazon DynamoDB Service Handler
+// AURA: Amazon DynamoDB Service Handler
 // ==============================================================================
 
 import { getState } from "./state";

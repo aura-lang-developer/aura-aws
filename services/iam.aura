@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS IAM (Identity and Access Management) Handler
+// AURA: AWS IAM (Identity and Access Management) Handler
 // ==============================================================================
 
 import { getState } from "./state";

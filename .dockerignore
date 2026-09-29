@@ -1,10 +1,10 @@
+.git
+.github
 *.mjs
 *.mjs.map
-.tmp
-.tmp/*
-.tmp.mjs.map
 *.__aura_tmp.*
 *.tmp.*
 .DS_Store
 dist/
 release/
+.dockerignore

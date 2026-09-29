@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: AWS Lambda Serverless Service REST API
+// AURA: AWS Lambda Serverless Service REST API
 // ==============================================================================
 
 import { getState } from "./state";
@@ -59,7 +59,7 @@ export fn registerLambdaRoutes(mux: Any): Unit => {
     let responsePayload = {
       statusCode: 200,
       body: JSON.stringify({
-        message: `Execution successful from Floci-Aura for ${fName}`,
+        message: `Execution successful from Aura for ${fName}`,
         executionTimeMs: 0.85,
         memoryUsedMb: 24
       })

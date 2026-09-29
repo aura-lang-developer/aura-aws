@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Floci-Aura Console · Local Cloud Runtime</title>
+  <title>Aura Console · Local Cloud Runtime</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>☁️</text></svg>">
-  <link rel="stylesheet" href="/_floci/ui/style.css">
+  <link rel="stylesheet" href="/_aura/ui/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
           <span class="aura-badge">Aura</span>
         </div>
         <div class="brand-text">
-          <h1>Floci<span>-Aura</span></h1>
+          <h1><span>Aura</span></h1>
           <p class="tagline">Local AWS Emulator</p>
         </div>
       </div>
@@ -136,7 +136,7 @@
               <span class="metric-badge aura">AURA SPEED</span>
             </div>
             <div class="metric-value">1.8 <small>ms</small></div>
-            <div class="metric-meta">92% faster than Floci Java (24ms)</div>
+            <div class="metric-meta">92% faster than JVM / Python</div>
           </div>
 
           <div class="metric-card glow-purple">
@@ -246,7 +246,7 @@ export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 
-# Run commands against Floci-Aura:
+# Run commands against Aura:
 aws s3 mb s3://my-local-bucket
 aws dynamodb list-tables</code></pre>
             <button class="btn-copy" onclick="copySnippet()">Copy</button>
@@ -468,11 +468,11 @@ aws dynamodb list-tables</code></pre>
             <span class="dot red"></span>
             <span class="dot yellow"></span>
             <span class="dot green"></span>
-            <span class="logs-title">floci-aura-telemetry.log</span>
+            <span class="logs-title">aura-telemetry.log</span>
             <input type="text" id="logSearchInput" placeholder="Filter log messages..." oninput="filterLogs()">
           </div>
           <div class="logs-content" id="logsContent">
-            <div class="log-line info">[INIT] Floci-Aura runtime engine initialized on :4566</div>
+            <div class="log-line info">[INIT] Aura runtime engine initialized on :4566</div>
             <div class="log-line info">[BOOT] Loaded 12 core AWS services in 1.84ms</div>
             <div class="log-line success">[READY] Ready for AWS CLI, SDK, and Terraform connections</div>
           </div>
@@ -596,6 +596,6 @@ aws dynamodb list-tables</code></pre>
     <span id="toastMessage">Operation successful</span>
   </div>
 
-  <script src="/_floci/ui/app.js"></script>
+  <script src="/_aura/ui/app.js"></script>
 </body>
 </html>

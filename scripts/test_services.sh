@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Floci-Aura Integration Test Suite
+# Aura Integration Test Suite
 # ==============================================================================
 # Tests all 12 emulated AWS services and system endpoints
 # ==============================================================================
@@ -11,7 +11,7 @@ PORT=${1:-4566}
 BASE_URL="http://localhost:${PORT}"
 
 echo "=================================================================="
-echo "🧪 RUNNING FLOCI-AURA INTEGRATION TEST SUITE"
+echo "🧪 RUNNING AURA INTEGRATION TEST SUITE"
 echo "Target Endpoint: ${BASE_URL}"
 echo "=================================================================="
 
@@ -37,26 +37,26 @@ assert_test() {
 echo ""
 echo "--- 1. System & Health Endpoints ---"
 
-RES_HEALTH=$(curl -s "${BASE_URL}/_floci/health")
+RES_HEALTH=$(curl -s "${BASE_URL}/_aura/health")
 assert_test "Health Endpoint" '"status":"healthy"' "$RES_HEALTH"
 
-RES_INFO=$(curl -s "${BASE_URL}/_floci/info")
-assert_test "Info Endpoint" '"name":"Floci-Aura"' "$RES_INFO"
+RES_INFO=$(curl -s "${BASE_URL}/_aura/info")
+assert_test "Info Endpoint" '"name":"Aura"' "$RES_INFO"
 
-RES_STATS=$(curl -s "${BASE_URL}/_floci/stats")
+RES_STATS=$(curl -s "${BASE_URL}/_aura/stats")
 assert_test "Stats Endpoint" '"memoryMb":8.4' "$RES_STATS"
 
-RES_RESOURCES=$(curl -s "${BASE_URL}/_floci/api/resources")
+RES_RESOURCES=$(curl -s "${BASE_URL}/_aura/api/resources")
 assert_test "Unified Resources Endpoint" '"s3":' "$RES_RESOURCES"
 
-RES_CLEAR_REQ=$(curl -s -X POST "${BASE_URL}/_floci/clear-requests")
+RES_CLEAR_REQ=$(curl -s -X POST "${BASE_URL}/_aura/clear-requests")
 assert_test "Clear Requests Endpoint" '"success":true' "$RES_CLEAR_REQ"
 
-RES_UI=$(curl -s "${BASE_URL}/_floci/ui" | head -n 10)
-assert_test "Web Console Serving" 'Floci-Aura Console' "$RES_UI"
+RES_UI=$(curl -s "${BASE_URL}/_aura/ui" | head -n 10)
+assert_test "Web Console Serving" 'Aura Console' "$RES_UI"
 
 RES_SITE=$(curl -s "${BASE_URL}/site" | head -n 10)
-assert_test "Promotional Website Serving" 'Floci-Aura · Ultra-Fast Local Cloud Emulator' "$RES_SITE"
+assert_test "Promotional Website Serving" 'Aura · Ultra-Fast Local Cloud Emulator' "$RES_SITE"
 
 echo ""
 echo "--- 2. Amazon S3 Storage ---"
@@ -72,12 +72,12 @@ assert_test "S3 List Buckets XML" '<Name>prod-assets</Name>' "$RES_LS"
 # S3 Put Object
 RES_PUT_OBJ=$(curl -s -X PUT "${BASE_URL}/prod-assets/config.json" \
   -H "Content-Type: application/json" \
-  -d '{"appName":"floci-test","version":"2.0"}' -w "%{http_code}")
+  -d '{"appName":"aura-test","version":"2.0"}' -w "%{http_code}")
 assert_test "S3 Put Object" "200" "$RES_PUT_OBJ"
 
 # S3 Get Object
 RES_GET_OBJ=$(curl -s "${BASE_URL}/prod-assets/config.json")
-assert_test "S3 Get Object Content" '"appName":"floci-test"' "$RES_GET_OBJ"
+assert_test "S3 Get Object Content" '"appName":"aura-test"' "$RES_GET_OBJ"
 
 # S3 List Objects inside Bucket
 RES_LIST_OBJS=$(curl -s "${BASE_URL}/prod-assets")
@@ -339,7 +339,7 @@ echo "SUMMARY: Passed: ${pass_count} | Failed: ${fail_count}"
 echo "=================================================================="
 
 if [ $fail_count -eq 0 ]; then
-  echo "🎉 ALL ${pass_count} TESTS PASSED FLAWLESSLY ON FLOCI-AURA!"
+  echo "🎉 ALL ${pass_count} TESTS PASSED FLAWLESSLY ON AURA!"
   exit 0
 else
   echo "❌ SOME TESTS FAILED!"

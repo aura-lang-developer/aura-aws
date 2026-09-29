@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Floci-Aura Quick Launcher
+# Aura Quick Launcher
 # ==============================================================================
 
 set -e
@@ -10,6 +10,6 @@ PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 PORT=${1:-4566}
 
-echo "Starting Floci-Aura local cloud emulator on port :${PORT}..."
+echo "Starting Aura local cloud emulator on port :${PORT}..."
 cd "${PROJECT_DIR}"
-FLOCI_PORT=${PORT} aurac run server.aura
+AURA_PORT=${PORT} aurac run server.aura

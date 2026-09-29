@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Floci-Aura AWS CLI Showcase Script
+# Aura AWS CLI Showcase Script
 # ==============================================================================
-# Demonstrates standard AWS CLI commands against local Floci-Aura (:4566)
+# Demonstrates standard AWS CLI commands against local Aura (:4566)
 # ==============================================================================
 
 set -e
@@ -14,7 +14,7 @@ export AWS_ACCESS_KEY_ID="mock_access_key"
 export AWS_SECRET_ACCESS_KEY="mock_secret_key"
 
 echo "=================================================================="
-echo "⚡ FLOCI-AURA: AWS CLI LIVE DEMONSTRATION"
+echo "⚡ AURA: AWS CLI LIVE DEMONSTRATION"
 echo "Endpoint: ${AWS_ENDPOINT_URL} | Region: ${AWS_DEFAULT_REGION}"
 echo "=================================================================="
 echo ""
@@ -29,7 +29,7 @@ curl -s -X PUT "${AWS_ENDPOINT_URL}/demo-bucket"
 echo "✓ Bucket 'demo-bucket' created"
 curl -s -X PUT "${AWS_ENDPOINT_URL}/demo-bucket/hello.txt" \
   -H "Content-Type: text/plain" \
-  -d "Hello from AWS CLI on Floci-Aura!"
+  -d "Hello from AWS CLI on Aura!"
 echo "✓ Object 'hello.txt' uploaded to s3://demo-bucket"
 echo "Content retrieved from s3://demo-bucket/hello.txt:"
 curl -s "${AWS_ENDPOINT_URL}/demo-bucket/hello.txt"
@@ -88,5 +88,5 @@ echo ""
 
 echo "=================================================================="
 echo "🎉 DEMO COMPLETE! Inspect resources in Web Console:"
-echo "👉 http://localhost:${PORT}/_floci/ui"
+echo "👉 http://localhost:${PORT}/_aura/ui"
 echo "=================================================================="

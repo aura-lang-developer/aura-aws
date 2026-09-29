@@ -1,4 +1,4 @@
-// Floci-Aura Web Console Controller
+// Aura Web Console Controller
 let activeTab = 'overview';
 let selectedBucket = null;
 let selectedTable = null;
@@ -71,7 +71,7 @@ function switchTab(tabName) {
     iam_kms: { title: 'Security & Identity (IAM/STS/KMS)', sub: 'Cryptographic keys, users, roles and mock caller identity' }
   };
 
-  const info = titleMap[tabName] || { title: 'Floci-Aura Console', sub: 'Aura Lang Native Cloud Runtime' };
+  const info = titleMap[tabName] || { title: 'Aura Console', sub: 'Aura Lang Native Cloud Runtime' };
   document.getElementById('pageTitle').textContent = info.title;
   document.getElementById('pageSubtitle').textContent = info.sub;
 }
@@ -82,13 +82,13 @@ let _prevReqTime = Date.now();
 // Fetch Full State from Server
 async function loadData() {
   try {
-    const res = await fetch('/_floci/api/resources');
+    const res = await fetch('/_aura/api/resources');
     if (!res.ok) return;
     const data = await res.json();
     appState = data;
     renderAll();
   } catch (err) {
-    console.debug('Floci-Aura poll error:', err);
+    console.debug('Aura poll error:', err);
   }
 }
 
@@ -428,7 +428,7 @@ function renderLogs() {
     contentEl.innerHTML = logs.map(l => `
       <div class="log-line ${l.level || 'info'}">
         <span style="color:var(--text-muted);font-size:0.7rem;">[${l.timestamp || '00:00:00'}]</span>
-        <strong>[${escapeHtml(l.service || 'FLOCI')}]</strong> ${escapeHtml(l.message)}
+        <strong>[${escapeHtml(l.service || 'AURA')}]</strong> ${escapeHtml(l.message)}
       </div>
     `).join('');
   }
@@ -886,7 +886,7 @@ function setupResetButton() {
   if (btn) {
     btn.addEventListener('click', async () => {
       if (!confirm('Are you sure you want to wipe all in-memory resources?')) return;
-      await fetch('/_floci/reset', { method: 'POST' });
+      await fetch('/_aura/reset', { method: 'POST' });
       selectedBucket = null;
       selectedTable = null;
       selectedQueue = null;
@@ -903,7 +903,7 @@ export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 
-# Run commands against Floci-Aura:
+# Run commands against Aura:
 aws s3 mb s3://my-local-bucket
 aws dynamodb list-tables`,
 
@@ -949,7 +949,7 @@ s3 = boto3.client(
     region_name='us-east-1'
 )
 
-s3.create_bucket(Bucket='floci-bucket')
+s3.create_bucket(Bucket='aura-bucket')
 print("Buckets:", s3.list_buckets()['Buckets'])`
 };
 
@@ -1140,7 +1140,7 @@ function filterLogs() {
 
 // Request Wire Log Clear
 async function clearRequestLog() {
-  await fetch('/_floci/clear-requests', { method: 'POST' });
+  await fetch('/_aura/clear-requests', { method: 'POST' });
   appState.requests = [];
   const tbody = document.getElementById('requestAuditTableBody');
   if (tbody) {

@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Standalone Local AWS Cloud Emulator in Aura Lang
+// AURA: Standalone Local AWS Cloud Emulator in Aura Lang
 // ==============================================================================
 // Re-engineered in Aura Language (Cranelift / Native Execution Model)
 // Listening on :4566 (Universal AWS Local Emulator Port)
@@ -15,9 +15,8 @@ import { registerLambdaRoutes } from "./services/lambda";
 import { registerS3Routes } from "./services/s3";
 
 export fn main(): Unit => {
-  let envPort = os.env("FLOCI_PORT");
-  let port = if (envPort != "") {
-    envPort
+  let port = if (os.env("AURA_PORT") != "") {
+    os.env("AURA_PORT")
   }else if (os.env("PORT") != "") {
     os.env("PORT")
   }else {
@@ -45,17 +44,17 @@ export fn main(): Unit => {
   registerS3Routes(mux);
 
   println("==================================================================");
-  println("  ⚡ FLOCI-AURA: LOCAL AWS CLOUD EMULATOR (AURA LANG NATIVE)");
+  println("  ⚡ AURA: LOCAL AWS CLOUD EMULATOR (AURA LANG NATIVE)");
   println("==================================================================");
-  println("  • Cold-Start Time:       ~1.8 ms (92% faster than Floci Java)");
+  println("  • Cold-Start Time:       ~1.8 ms (instant boot)");
   println("  • Idle Memory:           ~8.4 MB (Zero JVM overhead)");
   println("  • Concurrency:           Go-style CSP Fibers & Typed Channels");
-  println("  • Drop-in Replacement:   LocalStack Community & Floci");
+  println("  • Drop-in Replacement:   LocalStack Community & AWS APIs");
   println("  • Universal Port:        http://localhost:" + port);
   println("------------------------------------------------------------------");
-  println("  🌐 Web Console:          http://localhost:" + port + "/_floci/ui");
+  println("  🌐 Web Console:          http://localhost:" + port + "/_aura/ui");
   println("  🚀 Promotional Website:  http://localhost:" + port + "/site");
-  println("  ❤️  Health Check:         http://localhost:" + port + "/_floci/health");
+  println("  ❤️  Health Check:         http://localhost:" + port + "/_aura/health");
   println("------------------------------------------------------------------");
   println("  Emulated Services Ready:");
   println("   [✓] S3              [✓] DynamoDB      [✓] SQS Queues");

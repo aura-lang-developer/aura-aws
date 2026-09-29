@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: Embedded Web Console & Promotional Website File Serving
+// AURA: Embedded Web Console & Promotional Website File Serving
 // ==============================================================================
 
 export fn resolveStaticPath(relPath: String): String => {
@@ -8,11 +8,11 @@ export fn resolveStaticPath(relPath: String): String => {
   if (fs.existsSync(candidate1)) {
     candidate1
   }else {
-    let candidate2 = `${cwd}/floci-aura/${relPath}`;
+    let candidate2 = `${cwd}/aura-aws/${relPath}`;
     if (fs.existsSync(candidate2)) {
       candidate2
     }else {
-      let candidate3 = `${cwd}/projects/floci-aura/${relPath}`;
+      let candidate3 = `${cwd}/projects/aura-aws/${relPath}`;
       if (fs.existsSync(candidate3)) {
         candidate3
       }else {
@@ -24,33 +24,33 @@ export fn resolveStaticPath(relPath: String): String => {
 
 export fn registerStaticRoutes(mux: Any): Unit => {
   // Web Console UI routes
-  mux.get("/_floci/ui", fn(req: Any, res: Any) => {
+  mux.get("/_aura/ui", fn(req: Any, res: Any) => {
     let htmlPath = resolveStaticPath("ui/index.html");
     http.serveFile(res, req, htmlPath);
   });
 
-  mux.get("/_floci/ui/style.css", fn(req: Any, res: Any) => {
+  mux.get("/_aura/ui/style.css", fn(req: Any, res: Any) => {
     let cssPath = resolveStaticPath("ui/style.css");
     http.serveFile(res, req, cssPath);
   });
 
-  mux.get("/_floci/style.css", fn(req: Any, res: Any) => {
+  mux.get("/_aura/style.css", fn(req: Any, res: Any) => {
     let cssPath = resolveStaticPath("ui/style.css");
     http.serveFile(res, req, cssPath);
   });
 
-  mux.get("/_floci/ui/app.js", fn(req: Any, res: Any) => {
+  mux.get("/_aura/ui/app.js", fn(req: Any, res: Any) => {
     let jsPath = resolveStaticPath("ui/app.js");
     http.serveFile(res, req, jsPath);
   });
 
-  mux.get("/_floci/app.js", fn(req: Any, res: Any) => {
+  mux.get("/_aura/app.js", fn(req: Any, res: Any) => {
     let jsPath = resolveStaticPath("ui/app.js");
     http.serveFile(res, req, jsPath);
   });
 
   mux.get("/ui", fn(req: Any, res: Any) => {
-    http.redirect(res, "/_floci/ui", 302);
+    http.redirect(res, "/_aura/ui", 302);
   });
 
   // Promotional Website routes

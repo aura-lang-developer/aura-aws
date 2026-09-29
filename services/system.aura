@@ -1,5 +1,5 @@
 // ==============================================================================
-// FLOCI-AURA: System & Floci Management Endpoints
+// AURA: System & Management Endpoints
 // ==============================================================================
 
 import { getState, resetState, clearRequestAuditLog } from "./state";
@@ -7,7 +7,7 @@ import { logEvent } from "./utils";
 
 export fn registerSystemRoutes(mux: Any): Unit => {
   // Health status check
-  mux.get("/_floci/health", fn(req: Any, res: Any) => {
+  mux.get("/_aura/health", fn(req: Any, res: Any) => {
     http.json(res, http.StatusOK, {
       status: "healthy",
       runtime: "Aura Lang Native (Cranelift/Go)",
@@ -23,16 +23,16 @@ export fn registerSystemRoutes(mux: Any): Unit => {
   });
 
   mux.get("/health", fn(req: Any, res: Any) => {
-    http.json(res, http.StatusOK, {status: "healthy", engine: "floci-aura"});
+    http.json(res, http.StatusOK, {status: "healthy", engine: "aura"});
   });
 
   // Emulator metadata
-  mux.get("/_floci/info", fn(req: Any, res: Any) => {
+  mux.get("/_aura/info", fn(req: Any, res: Any) => {
     http.json(res, http.StatusOK, {
-      name: "Floci-Aura",
+      name: "Aura",
       tagline: "Any Cloud. Locally. Native Speed.",
       license: "MIT",
-      source: "https://github.com/floci-io/floci",
+      source: "https://github.com/mrojasb2000/aura-lang",
       implementation: "Aura Language (mrojasb2000/aura-lang)",
       architecture: {
         concurrency: "Go-style CSP Fibers & Channels",
@@ -44,7 +44,7 @@ export fn registerSystemRoutes(mux: Any): Unit => {
   });
 
   // Live Stats for Dashboard
-  mux.get("/_floci/stats", fn(req: Any, res: Any) => {
+  mux.get("/_aura/stats", fn(req: Any, res: Any) => {
     let s = getState();
     http.json(res, http.StatusOK, {
       totalRequests: s.totalRequestsCount,
@@ -64,7 +64,7 @@ export fn registerSystemRoutes(mux: Any): Unit => {
   });
 
   // Unified resource state for Web Console
-  mux.get("/_floci/api/resources", fn(req: Any, res: Any) => {
+  mux.get("/_aura/api/resources", fn(req: Any, res: Any) => {
     let s = getState();
     http.json(res, http.StatusOK, {
       s3: {buckets: s.s3Buckets, objects: s.s3Objects},
@@ -88,14 +88,14 @@ export fn registerSystemRoutes(mux: Any): Unit => {
   });
 
   // Clear Request Wire Audit Log
-  mux.post("/_floci/clear-requests", fn(req: Any, res: Any) => {
+  mux.post("/_aura/clear-requests", fn(req: Any, res: Any) => {
     clearRequestAuditLog();
     logEvent("SYSTEM", "info", "Request audit log cleared");
     http.json(res, http.StatusOK, {success: true, message: "Audit log cleared"});
   });
 
   // Wipe / Reset Emulator State
-  mux.post("/_floci/reset", fn(req: Any, res: Any) => {
+  mux.post("/_aura/reset", fn(req: Any, res: Any) => {
     resetState();
     logEvent("SYSTEM", "warn", "All emulator resources reset to clean slate");
     http.json(res, http.StatusOK, {success: true, message: "State reset successfully"});
