@@ -49,6 +49,9 @@ assert_test "Stats Endpoint" '"memoryMb":8.4' "$RES_STATS"
 RES_RESOURCES=$(curl -s "${BASE_URL}/_aura/api/resources")
 assert_test "Unified Resources Endpoint" '"s3":' "$RES_RESOURCES"
 
+RES_METRICS=$(curl -s "${BASE_URL}/_aura/metrics")
+assert_test "Prometheus Metrics Endpoint" 'aura_requests_total' "$RES_METRICS"
+
 RES_CLEAR_REQ=$(curl -s -X POST "${BASE_URL}/_aura/clear-requests")
 assert_test "Clear Requests Endpoint" '"success":true' "$RES_CLEAR_REQ"
 

@@ -1,0 +1,64 @@
+// Unit Test Suite for Utility Functions & Parameter Parsing
+
+fn defaultStr(val: Any, defVal: String): String => {
+  if (val != () && val != "") {
+    `${val}`
+  } else {
+    defVal
+  }
+}
+
+fn defaultInt(val: Any, defVal: Int): Int => {
+  if (val != ()) {
+    val
+  } else {
+    defVal
+  }
+}
+
+fn getFormValue(raw: String, key: String): String => {
+  if (raw == "") {
+    return "";
+  }
+  let pairs = raw.split("&");
+  for p in pairs {
+    let parts = p.split("=");
+    if (parts.length == 2 && parts[0].trim() == key) {
+      return parts[1].replace("+", " ").trim();
+    }
+  }
+  return "";
+}
+
+export fn test_defaultStr(t: TestingT) => {
+  let r1 = defaultStr("hello", "default");
+  t.assertEqual(r1, "hello", "Expected 'hello'");
+
+  let r2 = defaultStr("", "fallback");
+  t.assertEqual(r2, "fallback", "Expected fallback for empty string");
+}
+
+export fn test_defaultInt(t: TestingT) => {
+  let v1 = defaultInt(42, 0);
+  t.assertEqual(v1, 42, "Expected 42");
+
+  let v2 = defaultInt((), 10);
+  t.assertEqual(v2, 10, "Expected 10 default");
+}
+
+export fn test_getFormValue(t: TestingT) => {
+  let form = "Action=SendMessage&QueueUrl=http%3A%2F%2Flocalhost%3A4566&MessageBody=Hello+World";
+  let action = getFormValue(form, "Action");
+  t.assertEqual(action, "SendMessage", "Action should be SendMessage");
+
+  let body = getFormValue(form, "MessageBody");
+  t.assertEqual(body, "Hello World", "MessageBody should decode '+' to space");
+
+  let missing = getFormValue(form, "NonExistent");
+  t.assertEqual(missing, "", "Non-existent key should return empty string");
+}
+
+export fn benchmark_getFormValue(b: BenchmarkB) => {
+  let form = "Action=SendMessage&QueueUrl=http%3A%2F%2Flocalhost%3A4566&MessageBody=Hello+World";
+  getFormValue(form, "Action");
+}

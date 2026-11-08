@@ -139,7 +139,7 @@ export fn handleSNS(req: Any, res: Any, action: String, target: String, payload:
   if (action == "ListSubscriptions" || action == "ListSubscriptionsByTopic") {
     auditRequest(req, "SNS", 200);
     if (target != "") {
-      let mut allSubs: List<Any> = [];
+      let allSubs: List<Any> = [];
       for t in s.snsTopics {
         for sub in t.subscriptions {
           allSubs.push({

@@ -2,22 +2,157 @@
 // AURA: In-Memory Cloud State Store
 // ==============================================================================
 
-export type CloudStore = {
-  s3Buckets: List<Any>,
-  s3Objects: List<Any>,
-  dynamoTables: List<Any>,
-  sqsQueues: List<Any>,
-  snsTopics: List<Any>,
-  lambdaFunctions: List<Any>,
-  secrets: List<Any>,
-  ssmParameters: List<Any>,
-  kmsKeys: List<Any>,
-  cwLogGroups: List<Any>,
-  liveLogs: List<Any>,
-  eventBuses: List<Any>,
-  iamUsers: List<Any>,
-  iamRoles: List<Any>,
-  requestAuditLog: List<Any>,
+type S3Bucket = {
+  name: String,
+  region: String,
+  createdAt: String
+};
+
+type S3Object = {
+  bucket: String,
+  key: String,
+  content: String,
+  size: Int,
+  contentType: String,
+  etag: String,
+  lastModified: String
+};
+
+type DynamoTable = {
+  name: String,
+  status: String,
+  pk: String,
+  keySchema: List<Any>,
+  attributeDefinitions: List<Any>,
+  createdAt: String,
+  items: List<Any>
+};
+
+type SqsMessage = {
+  messageId: String,
+  receiptHandle: String,
+  body: String,
+  sentAt: String
+};
+
+type SqsQueue = {
+  name: String,
+  url: String,
+  arn: String,
+  createdAt: String,
+  messages: List<SqsMessage>
+};
+
+type SnsSubscription = {
+  subscriptionArn: String,
+  protocol: String,
+  endpoint: String
+};
+
+type SnsTopic = {
+  name: String,
+  arn: String,
+  createdAt: String,
+  subscriptions: List<SnsSubscription>
+};
+
+type LambdaFunction = {
+  name: String,
+  arn: String,
+  runtime: String,
+  handler: String,
+  timeout: Int,
+  memorySize: Int,
+  lastModified: String
+};
+
+type SecretItem = {
+  name: String,
+  arn: String,
+  value: String,
+  description: String,
+  versionId: String,
+  createdAt: String
+};
+
+type SsmParameter = {
+  name: String,
+  type: String,
+  value: String,
+  version: Int,
+  description: String,
+  lastModified: String
+};
+
+type KmsKey = {
+  keyId: String,
+  arn: String,
+  description: String,
+  enabled: Bool,
+  createdAt: String
+};
+
+type CwLogGroup = {
+  name: String,
+  arn: String,
+  streams: List<String>,
+  createdAt: String
+};
+
+type LiveLogEntry = {
+  timestamp: String,
+  level: String,
+  service: String,
+  message: String
+};
+
+type EventBus = {
+  name: String,
+  arn: String,
+  rules: List<Any>
+};
+
+type IamUser = {
+  name: String,
+  arn: String,
+  userId: String,
+  createdAt: String
+};
+
+type IamRole = {
+  roleName: String,
+  arn: String,
+  roleId: String,
+  assumeRolePolicyDocument: String,
+  createdAt: String
+};
+
+type RequestAuditEntry = {
+  time: String,
+  method: String,
+  path: String,
+  service: String,
+  status: Int,
+  duration: String,
+  client: String
+};
+
+type CloudStore = {
+  s3Buckets: List<S3Bucket>,
+  s3Objects: List<S3Object>,
+  dynamoTables: List<DynamoTable>,
+  sqsQueues: List<SqsQueue>,
+  snsTopics: List<SnsTopic>,
+  lambdaFunctions: List<LambdaFunction>,
+  secrets: List<SecretItem>,
+  ssmParameters: List<SsmParameter>,
+  kmsKeys: List<KmsKey>,
+  cwLogGroups: List<CwLogGroup>,
+  liveLogs: List<LiveLogEntry>,
+  eventBuses: List<EventBus>,
+  iamUsers: List<IamUser>,
+  iamRoles: List<IamRole>,
+  requestAuditLog: List<RequestAuditEntry>,
   totalRequestsCount: Int,
   bootTimestamp: Int,
   nextIdCounter: Int

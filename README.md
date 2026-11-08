@@ -29,11 +29,24 @@
    - [Python (Boto3)](#4-python-boto3)
    - [Golang (AWS SDK v2)](#5-golang-aws-sdk-v2)
    - [Aura Lang (Cliente Nativo)](#6-aura-lang-cliente-nativo)
-8. [☁️ Servicios AWS Soportados](#️-servicios-aws-soportados)
+8. [☁️ Servicios AWS Soportados y Guía de Uso](#️-servicios-aws-soportados-y-guía-de-uso)
+   - [Amazon S3 (Almacenamiento de Objetos)](#amazon-s3)
+   - [Amazon DynamoDB (Base de Datos NoSQL)](#amazon-dynamodb)
+   - [Amazon SQS (Colas de Mensajería)](#amazon-sqs)
+   - [Amazon SNS (Notificaciones y Fanout)](#amazon-sns)
+   - [AWS Lambda (Funciones Serverless)](#aws-lambda)
+   - [AWS STS e IAM (Identidad y Roles)](#aws-sts-e-iam)
+   - [AWS KMS (Gestión de Llaves)](#aws-kms)
+   - [AWS Secrets Manager (Secretos)](#aws-secrets-manager)
+   - [AWS SSM Parameter Store (Configuraciones)](#aws-ssm-parameter-store)
+   - [Amazon CloudWatch Logs (Registros y Telemetría)](#amazon-cloudwatch-logs)
+   - [Amazon EventBridge (Bus de Eventos)](#amazon-eventbridge)
+   - [APIs Internas del Sistema y Métricas Prometheus](#apis-internas-del-sistema-y-métricas-prometheus)
 9. [🔬 ¿Por qué Aura Lang?](#-por-qué-aura-lang)
 10. [🧪 Suite de Pruebas y Verificación](#-suite-de-pruebas-y-verificación)
-11. [📂 Estructura del Proyecto](#-estructura-del-proyecto)
-12. [📄 Licencia](#-licencia)
+11. [🚀 Nuevas Mejoras y Modernización Aura Lang (v0.8.x)](#-nuevas-mejoras-y-modernización-aura-lang-v08x)
+12. [📂 Estructura del Proyecto](#-estructura-del-proyecto)
+13. [📄 Licencia](#-licencia)
 
 ---
 
@@ -412,7 +425,9 @@ export fn main(): Unit => {
 
 ---
 
-## ☁️ Servicios AWS Soportados
+## ☁️ Servicios AWS Soportados y Guía de Uso
+
+Aura implementa el protocolo wire nativo de AWS para 12 servicios esenciales. A continuación se detallan las operaciones disponibles y ejemplos concretos de invocación mediante **AWS CLI**, **cURL** y **SDKs**.
 
 | Servicio AWS | Protocolo Wire | Operaciones Soportadas |
 |---|---|---|
@@ -428,6 +443,501 @@ export fn main(): Unit => {
 | **SSM Parameter Store** | `AmazonSSM` (JSON 1.1) | `PutParameter`, `GetParameter`, `GetParametersByPath`, `DeleteParameter` |
 | **CloudWatch Logs** | `Logs_20140328` (JSON 1.1) | `CreateLogGroup`, `CreateLogStream`, `PutLogEvents`, `DescribeLogGroups`, `DescribeLogStreams` |
 | **Amazon EventBridge**| `AWSEvents` (JSON 1.1) | `CreateEventBus`, `ListEventBuses`, `PutEvents` |
+
+---
+
+### Amazon S3
+
+Almacenamiento de objetos compatible con llamadas REST HTTP nativas y comandos estándar de S3.
+
+#### Paso a Paso con AWS CLI:
+1. **Configurar el entorno**:
+   ```bash
+   export AWS_ENDPOINT_URL=http://localhost:4566
+   export AWS_DEFAULT_REGION=us-east-1
+   export AWS_ACCESS_KEY_ID=test
+   export AWS_SECRET_ACCESS_KEY=test
+   ```
+
+2. **Crear un Bucket**:
+   ```bash
+   aws s3 mb s3://mis-activos
+   # Salida esperada: make_bucket: mis-activos
+   ```
+
+3. **Subir un archivo**:
+   ```bash
+   echo "Contenido de prueba para Aura S3" > demo.txt
+   aws s3 cp demo.txt s3://mis-activos/documentos/demo.txt
+   # Salida esperada: upload: ./demo.txt to s3://mis-activos/documentos/demo.txt
+   ```
+
+4. **Listar Buckets y Objetos**:
+   ```bash
+   # Listar todos los buckets
+   aws s3 ls
+   # Salida esperada: 2026-09-18 12:00:00 mis-activos
+
+   # Listar contenido de un bucket
+   aws s3 ls s3://mis-activos/documentos/
+   ```
+
+5. **Descargar el archivo**:
+   ```bash
+   aws s3 cp s3://mis-activos/documentos/demo.txt copia_demo.txt
+   cat copia_demo.txt
+   ```
+
+6. **Eliminar Objeto y Bucket**:
+   ```bash
+   aws s3 rm s3://mis-activos/documentos/demo.txt
+   aws s3 rb s3://mis-activos
+   ```
+
+#### Paso a Paso con cURL directo (REST API pura):
+1. **Crear Bucket**:
+   ```bash
+   curl -i -X PUT http://localhost:4566/mi-bucket
+   # Retorna HTTP/1.1 200 OK
+   ```
+
+2. **Subir Objeto**:
+   ```bash
+   curl -i -X PUT http://localhost:4566/mi-bucket/config.json \
+     -H "Content-Type: application/json" \
+     -d '{"app": "aura-aws", "active": true}'
+   # Retorna HTTP/1.1 200 OK con header ETag
+   ```
+
+3. **Descargar Objeto**:
+   ```bash
+   curl -s http://localhost:4566/mi-bucket/config.json
+   ```
+
+4. **Listar Objetos (XML)**:
+   ```bash
+   curl -s http://localhost:4566/mi-bucket
+   ```
+
+5. **Eliminar Objeto**:
+   ```bash
+   curl -i -X DELETE http://localhost:4566/mi-bucket/config.json
+   ```
+
+---
+
+### Amazon DynamoDB
+
+Base de datos NoSQL de alta velocidad, soporta esquemas de clave de partición (HASH) y ordenación (RANGE), escaneos y filtros con formato JSON 1.0 (`x-amz-target: DynamoDB_20120810`).
+
+#### Paso a Paso con AWS CLI:
+1. **Crear una tabla (`Usuarios`) con clave primaria `id` (String)**:
+   ```bash
+   aws dynamodb create-table \
+       --table-name Usuarios \
+       --attribute-definitions AttributeName=id,AttributeType=S \
+       --key-schema AttributeName=id,KeyType=HASH \
+       --billing-mode PAY_PER_REQUEST
+   ```
+
+2. **Verificar que la tabla está creada**:
+   ```bash
+   aws dynamodb list-tables
+   # Salida esperada: { "TableNames": [ "users", "Usuarios" ] }
+   ```
+
+3. **Insertar un registro (`PutItem`)**:
+   ```bash
+   aws dynamodb put-item \
+       --table-name Usuarios \
+       --item '{
+           "id": {"S": "usr-901"},
+           "nombre": {"S": "Carla Gómez"},
+           "rol": {"S": "TechLead"},
+           "activo": {"BOOL": true}
+       }'
+   ```
+
+4. **Consultar un registro por clave (`GetItem`)**:
+   ```bash
+   aws dynamodb get-item \
+       --table-name Usuarios \
+       --key '{"id": {"S": "usr-901"}}'
+   ```
+
+5. **Escanear todos los registros (`Scan`)**:
+   ```bash
+   aws dynamodb scan --table-name Usuarios
+   ```
+
+6. **Eliminar el registro (`DeleteItem`)**:
+   ```bash
+   aws dynamodb delete-item \
+       --table-name Usuarios \
+       --key '{"id": {"S": "usr-901"}}'
+   ```
+
+7. **Eliminar la tabla (`DeleteTable`)**:
+   ```bash
+   aws dynamodb delete-table --table-name Usuarios
+   ```
+
+#### Paso a Paso con cURL / HTTP:
+```bash
+# Inserción directa con JSON 1.0
+curl -s -X POST http://localhost:4566/ \
+  -H "x-amz-target: DynamoDB_20120810.PutItem" \
+  -H "Content-Type: application/x-amz-json-1.0" \
+  -d '{"TableName":"users","Item":{"id":{"S":"usr-3000"},"name":{"S":"Diana"}}}'
+
+# Escaneo directo
+curl -s -X POST http://localhost:4566/ \
+  -H "x-amz-target: DynamoDB_20120810.Scan" \
+  -H "Content-Type: application/x-amz-json-1.0" \
+  -d '{"TableName":"users"}'
+```
+
+---
+
+### Amazon SQS
+
+Colas de mensajería desacopladas con soporte para envío, recepción por lotes, borrado y purga.
+
+#### Paso a Paso con AWS CLI:
+1. **Crear una cola**:
+   ```bash
+   aws sqs create-queue --queue-name tareas-fondo
+   # Retorna la QueueUrl: http://localhost:4566/000000000000/tareas-fondo
+   ```
+
+2. **Obtener la URL de la cola**:
+   ```bash
+   aws sqs get-queue-url --queue-name tareas-fondo
+   ```
+
+3. **Enviar un mensaje (`SendMessage`)**:
+   ```bash
+   aws sqs send-message \
+       --queue-url http://localhost:4566/000000000000/tareas-fondo \
+       --message-body '{"tarea": "generar_reporte", "usuarioId": 105}'
+   ```
+
+4. **Recibir el mensaje (`ReceiveMessage`)**:
+   ```bash
+   aws sqs receive-message \
+       --queue-url http://localhost:4566/000000000000/tareas-fondo
+   # Guarda el "ReceiptHandle" de la respuesta para eliminarlo
+   ```
+
+5. **Eliminar el mensaje procesado (`DeleteMessage`)**:
+   ```bash
+   aws sqs delete-message \
+       --queue-url http://localhost:4566/000000000000/tareas-fondo \
+       --receipt-handle "<ReceiptHandle>"
+   ```
+
+6. **Purgar todos los mensajes de una cola**:
+   ```bash
+   aws sqs purge-queue \
+       --queue-url http://localhost:4566/000000000000/tareas-fondo
+   ```
+
+---
+
+### Amazon SNS
+
+Manejo de tópicos Pub/Sub y suscripciones con **Fanout automático**: cualquier mensaje publicado en un tópico se entrega de forma reactiva e instantánea a las colas SQS suscritas.
+
+#### Paso a Paso con AWS CLI:
+1. **Crear un Tópico**:
+   ```bash
+   aws sns create-topic --name eventos-sistema
+   # Retorna: "TopicArn": "arn:aws:sns:us-east-1:000000000000:eventos-sistema"
+   ```
+
+2. **Crear una Cola SQS de destino**:
+   ```bash
+   aws sqs create-queue --queue-name receptor-alertas
+   # URL: http://localhost:4566/000000000000/receptor-alertas
+   ```
+
+3. **Suscribir la cola SQS al tópico**:
+   ```bash
+   aws sns subscribe \
+       --topic-arn arn:aws:sns:us-east-1:000000000000:eventos-sistema \
+       --protocol sqs \
+       --notification-endpoint http://localhost:4566/000000000000/receptor-alertas
+   ```
+
+4. **Publicar un evento en el tópico SNS**:
+   ```bash
+   aws sns publish \
+       --topic-arn arn:aws:sns:us-east-1:000000000000:eventos-sistema \
+       --message '{"evento": "PAGO_APROBADO", "monto": 450.00}'
+   ```
+
+5. **Verificar que el mensaje llegó a SQS (Fanout automático)**:
+   ```bash
+   aws sqs receive-message \
+       --queue-url http://localhost:4566/000000000000/receptor-alertas
+   # El body contendrá el mensaje publicado a través de SNS
+   ```
+
+---
+
+### AWS Lambda
+
+Gestión e invocación de funciones Serverless emuladas con retorno de logs simulados en base64.
+
+#### Paso a Paso con AWS CLI:
+1. **Registrar una función Lambda**:
+   ```bash
+   aws lambda create-function \
+       --function-name procesarPedido \
+       --runtime nodejs20.x \
+       --role arn:aws:iam::000000000000:role/admin-role \
+       --handler index.handler
+   ```
+
+2. **Listar funciones registradas**:
+   ```bash
+   aws lambda list-functions
+   ```
+
+3. **Invocar la función Lambda de forma sincrónica**:
+   ```bash
+   aws lambda invoke \
+       --function-name procesarPedido \
+       --payload '{"pedidoId": "PED-7788"}' \
+       respuesta.json
+
+   # Ver la respuesta de la función
+   cat respuesta.json
+   ```
+
+4. **Eliminar la función**:
+   ```bash
+   aws lambda delete-function --function-name procesarPedido
+   ```
+
+---
+
+### AWS STS e IAM
+
+Simulación de cuenta raíz (`000000000000`) para autenticación zero-setup y creación de roles y usuarios.
+
+#### Paso a Paso con AWS CLI:
+1. **Verificar la identidad del llamador (`GetCallerIdentity`)**:
+   ```bash
+   aws sts get-caller-identity
+   # Retorna cuenta 000000000000 y UserId AKIAIOSFODNN7EXAMPLE
+   ```
+
+2. **Asumir un Rol simulado (`AssumeRole`)**:
+   ```bash
+   aws sts assume-role \
+       --role-arn arn:aws:iam::000000000000:role/AdminRole \
+       --role-session-name SesionDesarrollo
+   ```
+
+3. **Crear un Usuario IAM**:
+   ```bash
+   aws iam create-user --user-name desarrollador-local
+   aws iam list-users
+   ```
+
+4. **Crear un Rol IAM con política de confianza**:
+   ```bash
+   aws iam create-role \
+       --role-name ServicioBackendRole \
+       --assume-role-policy-document '{"Version":"2012-10-17"}'
+   aws iam list-roles
+   ```
+
+---
+
+### AWS KMS
+
+Gestión de llaves maestras de cifrado (CMK) con simulación de cifrado y descifrado base64.
+
+#### Paso a Paso con AWS CLI:
+1. **Crear una llave KMS**:
+   ```bash
+   aws kms create-key --description "Llave Maestra Local"
+   # Copia el KeyId generado (ej. 1234abcd-12ab-34cd-56ef-1234567890ab)
+   ```
+
+2. **Listar llaves KMS**:
+   ```bash
+   aws kms list-keys
+   ```
+
+3. **Cifrar un secreto (`Encrypt`)**:
+   ```bash
+   aws kms encrypt \
+       --key-id 1234abcd-12ab-34cd-56ef-1234567890ab \
+       --plaintext "MiPasswordSeguro2026"
+   # Retorna el CiphertextBlob en base64
+   ```
+
+4. **Descifrar (`Decrypt`)**:
+   ```bash
+   aws kms decrypt \
+       --ciphertext-blob "TWlQYXNzd29yZFNlZ3VybzIwMjY="
+   ```
+
+---
+
+### AWS Secrets Manager
+
+Almacén seguro de credenciales con versionado automático.
+
+#### Paso a Paso con AWS CLI:
+1. **Guardar un secreto en formato JSON**:
+   ```bash
+   aws secretsmanager create-secret \
+       --name "prod/db/credenciales" \
+       --description "Credenciales de Postgres" \
+       --secret-string '{"host":"postgres-db","puerto":5432,"usuario":"admin","clave":"secreto_seguro"}'
+   ```
+
+2. **Listar secretos**:
+   ```bash
+   aws secretsmanager list-secrets
+   ```
+
+3. **Recuperar el valor del secreto (`GetSecretValue`)**:
+   ```bash
+   aws secretsmanager get-secret-value \
+       --secret-id "prod/db/credenciales"
+   ```
+
+4. **Actualizar el valor del secreto (`PutSecretValue`)**:
+   ```bash
+   aws secretsmanager put-secret-value \
+       --secret-id "prod/db/credenciales" \
+       --secret-string '{"host":"postgres-db","puerto":5432,"usuario":"admin","clave":"nueva_clave_2026"}'
+   ```
+
+5. **Eliminar el secreto**:
+   ```bash
+   aws secretsmanager delete-secret --secret-id "prod/db/credenciales"
+   ```
+
+---
+
+### AWS SSM Parameter Store
+
+Configuraciones jerárquicas tipo `String` y `SecureString`.
+
+#### Paso a Paso con AWS CLI:
+1. **Crear parámetros de configuración**:
+   ```bash
+   # Parámetro tipo String
+   aws ssm put-parameter \
+       --name "/app/entorno" \
+       --value "desarrollo-local" \
+       --type "String"
+
+   # Parámetro sensible tipo SecureString
+   aws ssm put-parameter \
+       --name "/app/pagos/api_key" \
+       --value "sk_live_998822aabbcc" \
+       --type "SecureString"
+   ```
+
+2. **Leer un parámetro específico**:
+   ```bash
+   aws ssm get-parameter --name "/app/entorno"
+   ```
+
+3. **Consultar todos los parámetros bajo un prefijo jerárquico**:
+   ```bash
+   aws ssm get-parameters-by-path --path "/app"
+   ```
+
+4. **Eliminar un parámetro**:
+   ```bash
+   aws ssm delete-parameter --name "/app/entorno"
+   ```
+
+---
+
+### Amazon CloudWatch Logs
+
+Creación de grupos y secuencias de logs, así como recepción de eventos de registro (`PutLogEvents`).
+
+#### Paso a Paso con AWS CLI:
+1. **Crear un Grupo de Logs**:
+   ```bash
+   aws logs create-log-group --log-group-name "/aws/lambda/procesarPedido"
+   ```
+
+2. **Crear un Flujo de Logs (Log Stream)**:
+   ```bash
+   aws logs create-log-stream \
+       --log-group-name "/aws/lambda/procesarPedido" \
+       --log-stream-name "2026/09/18/[$LATEST]instancia1"
+   ```
+
+3. **Describir Grupos y Flujos de Logs**:
+   ```bash
+   aws logs describe-log-groups
+   aws logs describe-log-streams --log-group-name "/aws/lambda/procesarPedido"
+   ```
+
+4. **Enviar eventos de log (`PutLogEvents`)**:
+   ```bash
+   aws logs put-log-events \
+       --log-group-name "/aws/lambda/procesarPedido" \
+       --log-stream-name "2026/09/18/[$LATEST]instancia1" \
+       --log-events timestamp=1726660800000,message="Iniciando procesamiento de pedido..."
+   ```
+
+---
+
+### Amazon EventBridge
+
+Bus de eventos desacoplado con soporte para `PutEvents`.
+
+#### Paso a Paso con AWS CLI:
+1. **Crear un Bus de Eventos**:
+   ```bash
+   aws events create-event-bus --name "bus-facturacion"
+   ```
+
+2. **Listar Buses de Eventos**:
+   ```bash
+   aws events list-event-buses
+   ```
+
+3. **Emitir eventos hacia el bus (`PutEvents`)**:
+   ```bash
+   aws events put-events \
+       --entries '[{
+           "EventBusName": "bus-facturacion",
+           "Source": "tienda.facturas",
+           "DetailType": "FacturaGenerada",
+           "Detail": "{\"facturaId\": \"FAC-990\", \"total\": 120.50}"
+       }]'
+   ```
+
+---
+
+### APIs Internas del Sistema y Métricas Prometheus
+
+Aura incluye endpoints operativos para integración con tableros, orquestadores y pipelines de integración continua:
+
+| Endpoint | Método | Descripción | Ejemplo de Uso con cURL |
+|---|---|---|---|
+| `/_aura/health` | `GET` | Estado de salud, uptime, versión y lista de servicios activos | `curl -s http://localhost:4566/_aura/health` |
+| `/_aura/metrics` | `GET` | Métricas estándar en formato **Prometheus / OpenMetrics** | `curl -s http://localhost:4566/_aura/metrics` |
+| `/_aura/stats` | `GET` | Resumen cuantitativo de memoria y conteos de recursos | `curl -s http://localhost:4566/_aura/stats` |
+| `/_aura/api/resources` | `GET` | Snapshot JSON completo de todo el estado de la nube simulada | `curl -s http://localhost:4566/_aura/api/resources` |
+| `/_aura/clear-requests`| `POST` | Limpia el historial de auditoría de peticiones wire | `curl -s -X POST http://localhost:4566/_aura/clear-requests` |
+| `/_aura/reset` | `POST` | Restablece el emulador a un estado limpio (wipe de recursos) | `curl -s -X POST http://localhost:4566/_aura/reset` |
+| `/_aura/ui` | `GET` | Consola Web visual interactiva (SPA) | Abre `http://localhost:4566/_aura/ui` en navegador |
+| `/site` | `GET` | Portal de referencia técnica y documentación interactiva | Abre `http://localhost:4566/site` en navegador |
 
 ---
 
@@ -456,8 +966,11 @@ Para ejecutar las pruebas:
 # Iniciar el servidor
 AURA_PORT=4566 aurac run server.aura &
 
-# Ejecutar el runner de pruebas automatizado
+# Ejecutar el runner de pruebas automatizado de integración
 ./scripts/test_services.sh 4566
+
+# Ejecutar la suite nativa de tests unitarios de Aura (Go-style runner)
+aurac test -v ./tests/...
 ```
 
 ### Resultados de Verificación:
@@ -472,6 +985,9 @@ Target Endpoint: http://localhost:4566
   [PASS] Health Endpoint
   [PASS] Info Endpoint
   [PASS] Stats Endpoint
+  [PASS] Unified Resources Endpoint
+  [PASS] Prometheus Metrics Endpoint
+  [PASS] Clear Requests Endpoint
   [PASS] Web Console Serving
   [PASS] Promotional Website Serving
 
@@ -487,6 +1003,68 @@ Target Endpoint: http://localhost:4566
   [PASS] DynamoDB ListTables
   [PASS] DynamoDB PutItem
   [PASS] DynamoDB Scan Items
+
+==================================================================
+SUMMARY: Passed: 33 | Failed: 0
+==================================================================
+🎉 ALL 33 INTEGRATION TESTS PASSED FLAWLESSLY ON AURA!
+```
+
+### Pruebas Unitarias Nativas (`aurac test`):
+
+```bash
+$ aurac test -v ./tests/...
+=== RUN   test_defaultStr
+--- PASS: test_defaultStr (0.000s)
+=== RUN   test_defaultInt
+--- PASS: test_defaultInt (0.000s)
+=== RUN   test_getFormValue
+--- PASS: test_getFormValue (0.000s)
+=== RUN   test_xmlWrap
+--- PASS: test_xmlWrap (0.000s)
+=== RUN   test_stsCallerIdentity
+--- PASS: test_stsCallerIdentity (0.000s)
+=== RUN   test_xmlWrap_nested
+--- PASS: test_xmlWrap_nested (0.001s)
+
+PASS
+Ran 6 tests in 0.198s (6 passed)
+```
+
+---
+
+## 🚀 Nuevas Mejoras y Modernización Aura Lang (v0.8.x)
+
+El proyecto ha sido actualizado y enriquecido aprovechando las innovaciones del compilador y runtime de **Aura Lang (`v0.8.5`)**:
+
+### 1. Sistema de Tipado Fuerte para Recursos Cloud (`services/state.aura`)
+* Se reemplazaron las colecciones genéricas `List<Any>` de `CloudStore` por registros de dominio fuertemente tipados:
+  * `S3Bucket` y `S3Object` para almacenamiento en Amazon S3.
+  * `DynamoTable` para esquemas de tablas NoSQL DynamoDB.
+  * `SqsQueue` y `SqsMessage` para mensajería en cola.
+  * `SnsTopic` y `SnsSubscription` para eventos Fanout.
+  * `LambdaFunction`, `SecretItem`, `SsmParameter`, `KmsKey`, `CwLogGroup`, `EventBus`, `IamUser` y `IamRole`.
+  * `LiveLogEntry` y `RequestAuditEntry` para trazabilidad de peticiones.
+* Esto permite verificación estática rigurosa con `aura check`, detección temprana de discrepancias de propiedades y soporte óptimo en el servidor de lenguaje (LSP).
+
+### 2. Exportador de Métricas Estándar Prometheus (`/_aura/metrics`)
+* Se añadió soporte nativo para observabilidad estándar en `services/system.aura` a través del endpoint `GET /_aura/metrics`.
+* Exporta métricas clave en formato texto OpenMetrics/Prometheus:
+  * `aura_requests_total`: Contador acumulado de peticiones procesadas.
+  * `aura_uptime_seconds`: Tiempo de actividad en segundos.
+  * `aura_memory_mb`: Huella de memoria estimada (~8.4 MB).
+  * `aura_s3_buckets_total`, `aura_dynamodb_tables_total`, `aura_sqs_queues_total`, etc.: Medidores de recursos en tiempo real.
+* Integrable con Grafana, Prometheus Agent o Datadog para monitoreo de suites locales o pipelines CI/CD.
+
+### 3. Suite de Pruebas Nativas con el Runner de Aura (`aurac test`)
+* Se implementaron suites de pruebas nativas en el directorio `tests/` (`tests/utils_unit_test.aura` y `tests/xml_test.aura`).
+* Utiliza las primitivas de aserción `t.assertEqual`, `t.assertTrue` y benchmarks estilo Go `b: BenchmarkB`.
+* Permite validar utilidades y serializadores XML sin levantar procesos de red externos.
+
+### 4. Alineación con las Reglas del Linter y Convención Go-Style (`v0.8.5`)
+* **LINT004**: Eliminación de redundancia de `export` en tipos PascalCase (`type CloudStore = { ... }`), adaptándose a la visibilidad automática por convención Go-style de Aura.
+* **LINT001**: Corrección de declaraciones de mutabilidad (`let mut` a `let`) donde no existen reasignaciones escalares.
+* Estado del linter: **100% limpio en todos los módulos (`aura lint`).**
 
 --- 4. Amazon SQS Queues ---
   [PASS] SQS CreateQueue XML
@@ -563,9 +1141,13 @@ aura-aws/
 │   ├── index.html                 # Landing page con Hero, Terminal CLI interactiva y Benchmarks
 │   ├── style.css                  # Diseño responsive moderno y tipografía fluida
 │   └── app.js                     # Emulador de terminal en vivo y conmutador de snippets
+├── tests/                         # Suites de pruebas nativas (aurac test)
+│   ├── utils_unit_test.aura       # Tests unitarios y benchmarks de utilidades
+│   └── xml_test.aura              # Tests de serialización de payloads XML de AWS
 └── scripts/
-    ├── test_services.sh           # Suite automatizada de pruebas de integración (52 tests)
+    ├── test_services.sh           # Suite automatizada de pruebas de integración (33 tests)
     ├── demo_cli.sh                # Demostración en vivo de comandos AWS CLI
+    ├── package.sh                 # Empaquetado y distribución multiplataforma
     └── run.sh                     # Script de arranque rápido
 ```
 

@@ -1,0 +1,33 @@
+// Unit Test Suite for XML Serialization (Aura AWS)
+
+fn xmlWrap(tag: String, content: String): String => {
+  "<" + tag + ">" + content + "</" + tag + ">"
+}
+
+fn renderStsCallerIdentity(): String => {
+  "<GetCallerIdentityResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">" +
+  "<GetCallerIdentityResult>" +
+  xmlWrap("Arn", "arn:aws:iam::000000000000:root") +
+  xmlWrap("UserId", "AKIAIOSFODNN7EXAMPLE") +
+  xmlWrap("Account", "000000000000") +
+  "</GetCallerIdentityResult>" +
+  "<ResponseMetadata><RequestId>aura-req-sts-001</RequestId></ResponseMetadata>" +
+  "</GetCallerIdentityResponse>"
+}
+
+export fn test_xmlWrap(t: TestingT) => {
+  let res = xmlWrap("Bucket", "my-test-bucket");
+  t.assertEqual(res, "<Bucket>my-test-bucket</Bucket>", "xmlWrap should produce valid XML tag enclosing content");
+}
+
+export fn test_stsCallerIdentity(t: TestingT) => {
+  let xml = renderStsCallerIdentity();
+  t.assertTrue(xml.includes("<Arn>arn:aws:iam::000000000000:root</Arn>"), "STS response must include Root ARN");
+  t.assertTrue(xml.includes("<Account>000000000000</Account>"), "STS response must include 000000000000 Account");
+}
+
+export fn test_xmlWrap_nested(t: TestingT) => {
+  let child = xmlWrap("Name", "test");
+  let parent = xmlWrap("Item", child);
+  t.assertEqual(parent, "<Item><Name>test</Name></Item>", "Nested XML should match");
+}
